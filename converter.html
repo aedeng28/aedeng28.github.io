@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> Base Converter </title>
+<script>
+function change(input, text){
+    const inv = document.getElementById(input);
+    inv.value = text;
+};
+function getinput(input){
+    const inn = document.getElementById(input);
+    return inn.value;
+};
+function fetchcar(){
+    return getinput('char');
+};
+function symb(inn){
+    let chars = fetchcar();
+    return chars[inn-10];
+};
+function val(inn){
+    if (!isNaN(inn) && inn.trim() !== "") {
+        return parseInt(inn, 10);
+    }
+    let chars = fetchcar();
+    let index = chars.indexOf(inn.toUpperCase());
+    return index !== -1 ? index + 10 : -1;
+};
+
+// --- BIJECTIVE CONVERSION FUNCTIONS ---
+
+function bijectiveToDecimal(numStr, base) {
+    let str = numStr.toUpperCase().trim();
+    let value = 0;
+    let alphabet = "123456789" + fetchcar(); 
+
+    for (let i = 0; i < str.length; i++) {
+        let char = str[i];
+        let digitVal = alphabet.indexOf(char) + 1; 
+        
+        if (digitVal === 0 || digitVal > base) {
+            throw new Error(`Invalid bijective digit '${char}' for base ${base}`);
+        }
+        
+        value = value * base + digitVal;
+    }
+    return value;
+}
+
+function decimalToBijective(number, base) {
+    let n = Math.floor(number);
+    if (n <= 0) return "Error: Must be greater than 0"; 
+    if (base <= 1) throw new Error("Base must be greater than 1.");
+
+    let alphabet = "123456789" + fetchcar();
+    let result = "";
+
+    while (n > 0) {
+        let remainder = n % base;
+        if (remainder === 0) {
+            remainder = base;
+            n = Math.floor(n / base) - 1; 
+        } else {
+            n = Math.floor(n / base);
+        }
+        result = alphabet[remainder - 1] + result;
+    }
+    return result;
+}
+
+// --- STANDARD BASE FUNCTIONS ---
+
+function baseAToDecimal(numStr, base) {
+    if (typeof numStr !== "string") {
+        throw new Error("Invalid input: numStr must be string");
+    }
+
+    const parts = numStr.split(".");
+    const intPart = parts[0] || "0";
+    const fracPart = parts[1] || "";
+
+    let value = 0;
+
+    for (let i = 0; i < intPart.length; i++) {
+        const digit = val(intPart[i]); 
+        if (digit === -1 || digit >= base) {
+            throw new Error(`Invalid digit '${intPart[i]}' for base ${base}`);
+        }
+        const power = intPart.length - i - 1;
+        value += digit * Math.pow(base, power);
+    }
+
+    for (let i = 0; i < fracPart.length; i++) {
+        const digit = val(fracPart[i]); 
+        if (digit === -1 || digit >= base) {
+            throw new Error(`Invalid digit '${fracPart[i]}' for base ${base}`);
+        }
+        const power = -(i + 1);
+        value += digit * Math.pow(base, power);
+    }
+
+    return value;
+};
+
+function convertDecimalToBase(number, base, precision = 10) {
+    if (number === 0) return "0";
+    if (base <= 1) throw new Error("Base must be greater than 1.");
+
+    let result = "";
+    let remaining = number;
+
+    let exponent = Math.floor(Math.log(remaining) / Math.log(base));
+    let highestExponent = Math.max(0, exponent);
+
+    for (let e = highestExponent; e >= -precision; e--) {
+        if (e === -1) {
+            result += result === "" ? "0." : ".";
+        }
+
+        let power = Math.pow(base, e);
+        let digitValue = Math.floor(remaining / power);
+
+        let digitChar = digitValue < 10 ? digitValue.toString() : symb(digitValue);
+        result += digitChar;
+
+        remaining -= digitValue * power;
+        if (remaining <= 0 && e <= 0) break;
+    }
+
+    if (result.startsWith('.')) result = '0' + result;
+    
+    return result;
+};
+
+// --- CORE CONTROLLER LOGIC ---
+
+function BastoBas(ba, bb, ia, pr){
+    try {
+        let baseFrom = Number(ba);
+        let baseTo = Number(bb);
+        let precision = pr.trim() !== "" ? Number(pr) : 10; 
+        
+        let inputIsBijective = document.getElementById('inputBijective').checked;
+        let outputIsBijective = document.getElementById('outputBijective').checked;
+        
+        let dec = 0;
+
+        // Step 1: Read the input value and find its true decimal size
+        if (inputIsBijective) {
+            dec = bijectiveToDecimal(ia, baseFrom);
+        } else {
+            dec = (baseFrom === 10) ? Number(ia) : baseAToDecimal(ia, baseFrom);
+        }
+
+        // Step 2: Convert that true decimal size to the target base format
+        if (outputIsBijective) {
+            return decimalToBijective(dec, baseTo);
+        } else {
+            return convertDecimalToBase(dec, baseTo, precision);
+        }
+
+    } catch (error) {
+        return error.message;
+    }
+}
+</script>
+<style>
+        body {
+            /*new*/
+            /* Delete the placeholder line below and uncomment the image line when ready */
+             /* Placeholder */
+             background-image: url('bg.png');  /* Fix here later */
+            
+            /* These lines keep your image looking crisp and perfectly centered */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+
+            margin: 0;
+            padding: 40px; /* This creates the colorful border frame around the blue box */
+            height: 100vh;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 2. Style the big light blue rectangle */
+        .blue-container {
+            background-color: #cce2ff; /* Light blue color matching your image */
+            width: 100%;
+            height: 100%;
+            padding: 80px;            /* Pushes the text away from the edges */
+            box-sizing: border-box;
+        }
+
+        /* 3. Style the text font and size */
+        .blue-container p {
+            font-size: 24px;          /* Makes the text large like your image */
+            margin: 0;
+            color: #000000;
+        }
+</style>
+</head>
+<body>
+
+<h2>Base Converter</h2>
+<div class="blue-container">
+<p id="demo"> Input character set for numbers after 9. </p>
+<input id='char'>
+<br><br>
+
+<p><strong>Step 1:</strong> Enter Current Base and Value</p>
+<label>From Base: </label><input id='ba' placeholder="e.g. 16">
+<label>Value: </label><input id='ia' placeholder="e.g. A2.B">
+<br>
+<!-- NEW: Checkbox to specify if the input is regular or bijective -->
+<label><input type="checkbox" id="inputBijective"> Input is already Bijective (No Zero)</label>
+<br><br>
+
+<p><strong>Step 2:</strong> Enter Target Base & Precision</p>
+<label>To Base: </label><input id='bb' placeholder="e.g. 2">
+<label>Decimal Places: </label><input id='pr' placeholder="10" value="10" style="width: 50px;">
+<br>
+<!-- NEW: Checkbox to specify if the output should be regular or bijective -->
+<label><input type="checkbox" id="outputBijective"> Convert Output to Bijective (No Zero)</label>
+<br><br>
+
+<button type="button" onclick="change('out', BastoBas(getinput('ba'), getinput('bb'), getinput('ia'), getinput('pr')));">Convert Base</button>
+<br><br>
+
+<label>Output: </label><input id='out' readonly>
+<p> For a more accurate base phi converter, go <a href='phi.html'>here.</a></p>
+</div>
+<script>
+change('char', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+</script>
+</body>
+</html>
