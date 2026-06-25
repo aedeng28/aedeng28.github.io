@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> continued fraction converter ig </title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div class="container">
+    <h2>Continued Fraction Approximator</h2>
+    <div class="input-group">
+        <label for="decimalInput">Enter a decimal number:</label>
+        <input type="number" id="decimalInput" value="3.14159265" step="any" oninput="calculateCF()">
+    </div>
+
+    <div class="results">
+        <p><span class="label">Sequence:</span> <span id="cfSequence">[ ]</span></p>
+        <p><span class="label">Approximate Value:</span> <span id="cfApprox">0</span></p>
+        <p><span class="label">Error:</span> <span id="cfError">0</span></p>
+    </div>
+
+    <h3>Rational Convergents</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Term ($a_n$)</th>
+                <th>Convergent</th>
+                <th>Decimal Value</th>
+            </tr>
+        </thead>
+        <tbody id="convergentsTable">
+            <!-- Rows generated dynamically -->
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
+
