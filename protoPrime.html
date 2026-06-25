@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Wikipedia Minor Planet Lookup</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        input, button { padding: 10px; font-size: 16px; margin: 5px 0; }
+        #result { margin-top: 20px; font-weight: bold; font-size: 18px; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <h2>Minor Planet Name Lookup</h2>
+    <p>Enter a minor planet number (e.g., 95):</p>
+    <input type="number" id="planetNumber" value="95" min="1">
+    <button onclick="findPlanetName()">Get Name</button>
+
+    <div id="result"></div>
+
+<script>
+async function findPlanetName() {
+    const num = parseInt(document.getElementById('planetNumber').value);
+    const resultDiv = document.getElementById('result');
+    
+    if (isNaN(num) || num < 1) {
+        resultDiv.innerText = "Please enter a valid positive number.";
+        return;
+    }
+
+    resultDiv.innerText = "Searching Wikipedia...";
+
+    // 1. Calculate which block page the planet belongs to (Wikipedia groups them by 1000s)
+    const startRange = Math.floor((num - 1) / 1000) * 1000 + 1;
+    const endRange = startRange + 999;
+    const pageTitle = `List_of_minor_planets:_${startRange}–${endRange}`;
+
+    // 2. Fetch the raw HTML content of that specific Wikipedia section via API
+    const apiUrl = `https://wikipedia.org{pageTitle}&format=json&prop=text&origin=*`;
+
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (!data.parse || !data.parse.text) {
+            resultDiv.innerText = `Could not find the Wikipedia page for number ${num}.`;
+            return;
+        }
+
+        // 3. Parse the returned HTML string into a virtual DOM
+        const htmlString = data.parse.text['*'];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+
+        // 4. Locate the exact row using the planet number as an ID anchor
+        // Wikipedia formats row IDs like id="95" or targets them sequentially
+        const targetRow = doc.getElementById(num.toString()) || 
+                          doc.querySelector(`th[id="${num}"], td[id="${num}"]`)?.closest('tr');
+
+        if (targetRow) {
+            // Locate the column containing the name link (usually the 2nd or 3rd column)
+            const nameAnchor = targetRow.querySelector('td a, th a');
+            if (nameAnchor) {
+                resultDiv.innerHTML = `Planet #${num} is named: <span style="color:#27ae60;">${nameAnchor.innerText}</span>`;
+                return;
+            }
+        }
+        
+        // Backup Selector: Iterate rows manually if IDs are formatted differently
+        const rows = doc.querySelectorAll('.wikitable tr');
+        for (let row of rows) {
+            const firstCell = row.querySelector('th, td');
+            if (firstCell && firstCell.innerText.trim() === num.toString()) {
+                const nameAnchor = row.querySelector('td a');
+                if (nameAnchor) {
+                    resultDiv.innerHTML = `Planet #${num} is named: <span style="color:#27ae60;">${nameAnchor.innerText}</span>`;
+                    return;
+                }
+            }
+        }
+
+        resultDiv.innerText = `Planet #${num} was found, but its name could not be parsed.`;
+
+    } catch (error) {
+        console.error(error);
+        resultDiv.innerText = "An error occurred while fetching data from Wikipedia.";
+    }
+}
+</script>
+
+</body>
+</html>
