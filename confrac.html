@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
 <title> continued fraction converter ig </title>
@@ -84,5 +84,106 @@
 </script>
 
 </body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+<title> continued fraction converter ig </title>
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div class="container">
+    <h2>Continued Fraction Approximator</h2>
+    <div class="input-group">
+        <label for="decimalInput">Enter a decimal number:</label>
+        <input type="number" id="decimalInput" value="3.14159265" step="any" oninput="calculateCF()">
+    </div>
+
+    <div class="results">
+        <p><span class="label">Sequence:</span> <span id="cfSequence">[ ]</span></p>
+        <p><span class="label">Approximate Value:</span> <span id="cfApprox">0</span></p>
+        <p><span class="label">Error:</span> <span id="cfError">0</span></p>
+    </div>
+
+    <h3>Rational Convergents</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Term ($a_n$)</th>
+                <th>Convergent</th>
+                <th>Decimal Value</th>
+            </tr>
+        </thead>
+        <tbody id="convergentsTable">
+            <!-- Rows generated dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<!-- This script block was missing from your code! -->
+<script>
+    function calculateCF() {
+        let x = parseFloat(document.getElementById('decimalInput').value);
+        if (isNaN(x)) {
+            return;
+        }
+
+        let tolerance = 1.0e-9;
+        let maxTerms = 15;
+        let terms = [];
+        let convergents = [];
+        
+        let tempX = x;
+        
+        for (let i = 0; i < maxTerms; i++) {
+            let a = Math.floor(tempX);
+            terms.push(a);
+            
+            let remainder = tempX - a;
+            if (Math.abs(remainder) < tolerance) {
+                break;
+            }
+            tempX = 1 / remainder;
+        }
+
+        document.getElementById('cfSequence').innerText = '[ ' + terms.join(', ') + ' ]';
+
+        let p_2 = 0, p_1 = 1;
+        let q_2 = 1, q_1 = 0;
+        let tableHtml = '';
+
+        for (let i = 0; i < terms.length; i++) {
+            let a = terms[i];
+            let p = a * p_1 + p_2;
+            let q = a * q_1 + q_2;
+
+            convergents.push({p: p, q: q});
+            
+            let val = p / q;
+            tableHtml += `<tr>
+                <td>${a}</td>
+                <td>${p} / ${q}</td>
+                <td>${val.toFixed(7)}</td>
+            </tr>`;
+
+            p_2 = p_1; p_1 = p;
+            q_2 = q_1; q_1 = q;
+        }
+
+        document.getElementById('convergentsTable').innerHTML = tableHtml;
+
+        let lastConvergent = convergents[convergents.length - 1];
+        let approxValue = lastConvergent.p / lastConvergent.q;
+        document.getElementById('cfApprox').innerText = approxValue.toFixed(8);
+        document.getElementById('cfError').innerText = Math.abs(x - approxValue).toExponential(2);
+    }
+
+    // Runs it once on page load using the default value
+    calculateCF();
+</script>
+
+</body>
 </html>
+
 
