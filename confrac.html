@@ -6,33 +6,82 @@
 
 </head>
 <body>
-<div class="container">
-    <h2>Continued Fraction Approximator</h2>
-    <div class="input-group">
-        <label for="decimalInput">Enter a decimal number:</label>
-        <input type="number" id="decimalInput" value="3.14159265" step="any" oninput="calculateCF()">
+<div class="card">
+    <h2>Decimal to Continued Fraction</h2>
+    
+    <label for="decInput">Type or Paste Number:</label>
+    <input type="number" id="decInput" value="3.1415926535" step="any">
+
+    <div class="output-box">
+        <p><strong>Sequence:</strong> <span id="seqText"></span></p>
+        <p><strong>Result Fraction:</strong> <span id="fracText"></span></p>
     </div>
 
-    <div class="results">
-        <p><span class="label">Sequence:</span> <span id="cfSequence">[ ]</span></p>
-        <p><span class="label">Approximate Value:</span> <span id="cfApprox">0</span></p>
-        <p><span class="label">Error:</span> <span id="cfError">0</span></p>
-    </div>
-
-    <h3>Rational Convergents</h3>
+    <h3>Convergents Table</h3>
     <table>
         <thead>
             <tr>
-                <th>Term ($a_n$)</th>
-                <th>Convergent</th>
-                <th>Decimal Value</th>
+                <th>Step</th>
+                <th>Fraction</th>
+                <th>Decimal</th>
             </tr>
         </thead>
-        <tbody id="convergentsTable">
-            <!-- Rows generated dynamically -->
-        </tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 </div>
+
+<script>
+    const input = document.getElementById('decInput');
+    
+    function process() {
+        let val = parseFloat(input.value);
+        if (isNaN(val)) return;
+
+        let left = val;
+        let seq = [];
+        let limit = 15; 
+
+        // Generate elements
+        for (let i = 0; i < limit; i++) {
+            let floor = Math.floor(left);
+            seq.push(floor);
+            let diff = left - floor;
+            if (diff < 1e-9) break;
+            left = 1 / diff;
+        }
+
+        document.getElementById('seqText').innerText = "[" + seq.join(", ") + "]";
+
+        // Build convergents
+        let p0 = 0, p1 = 1;
+        let q0 = 1, q1 = 0;
+        let rows = "";
+
+        for (let i = 0; i < seq.length; i++) {
+            let a = seq[i];
+            let p = a * p1 + p0;
+            let q = a * q1 + q0;
+            
+            rows += `<tr>
+                <td>${i + 1}</td>
+                <td><strong>${p} / ${q}</strong></td>
+                <td>${(p / q).toFixed(7)}</td>
+            </tr>`;
+
+            p0 = p1; p1 = p;
+            q0 = q1; q1 = q;
+            
+            if (i === seq.length - 1) {
+                document.getElementById('fracText').innerText = `${p} / ${q}`;
+            }
+        }
+        document.getElementById('tableBody').innerHTML = rows;
+    }
+
+    // Force run instantly and bind both text changes and arrow clicks
+    input.addEventListener('input', process);
+    process();
+</script>
 
 </body>
 </html>
