@@ -93,10 +93,8 @@
 
 </head>
 <body>
-<nav class="navbar">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-</nav>
+<div id="custom-header"></div>
+
 <div class="container">
     <h2>Continued Fraction Approximator</h2>
     <div class="input-group">
@@ -187,6 +185,11 @@
     calculateCF();
 </script>
 
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
 </body>
 </html>
 

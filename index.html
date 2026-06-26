@@ -50,10 +50,8 @@
 </style>
 </head>
 <body>
-<nav class="navbar">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-</nav>
+<div id="custom-header"></div>
+
 <div class="blue-container">
 <h1>  thingy </h1>
 <h2> Links</h2>
@@ -71,6 +69,11 @@
    
  </div>
 
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
 </body>
 </html>
 

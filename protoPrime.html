@@ -11,10 +11,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<nav class="navbar">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-</nav>
+<div id="custom-header"></div>
+
     <div class=blue-container">
     <h2>Minor Planet Name Lookup</h2>
     <p>Enter a minor planet number (e.g., 95):</p>
@@ -94,5 +92,10 @@ async function findPlanetName() {
 }
 </script>
 
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
 </body>
 </html>

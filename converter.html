@@ -203,10 +203,8 @@ function BastoBas(ba, bb, ia, pr){
 </style>
 </head>
 <body>
-<nav class="navbar">
-<a href="index.html">Home</a>
-<a href="about.html">About</a>
-</nav>
+<div id="custom-header"></div>
+
 <h2>Base Converter</h2>
 <div class="blue-container">
 <p id="demo"> Input character set for numbers after 9. </p>
@@ -237,6 +235,11 @@ function BastoBas(ba, bb, ia, pr){
 </div>
 <script>
 change('char', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+</script>
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
 </script>
 </body>
 </html>
