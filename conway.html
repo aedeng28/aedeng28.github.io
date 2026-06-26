@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> Life-Like Cellular Automoton </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
