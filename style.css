@@ -21,7 +21,7 @@ body {
         .blue-container {
             background-color: #cce2ff; /* Light blue color matching your image */
             width: 100%;
-            height: 100%;
+            height: 200%;
             padding: 80px;            /* Pushes the text away from the edges */
             box-sizing: border-box;
         }
