@@ -85,3 +85,27 @@ body {
             background-color: #3498db;
             color: white;
         }
+		.navbar {
+            background-color: #add8e6; /* Light blue color */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 60px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar a {
+            color: #333333;
+            text-decoration: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 4px;
+        }
+
+        .navbar a:hover {
+            background-color: #87ceeb; /* Slightly darker sky blue on hover */
+            color: #000000;
+        }
