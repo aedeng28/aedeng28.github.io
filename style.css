@@ -1,113 +1,159 @@
 body {
-            /*new*/
-            /* Delete the placeholder line below and uncomment the image line when ready */
-             /* Placeholder */
-             background-image: url('bg.png');  /* Fix here later */
-            
-            /* These lines keep your image looking crisp and perfectly centered */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+    /* Background settings remain clean and responsive */
+    background-image: url('bg.png');  
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 
-            margin: 0;
-            padding: 40px; /* This creates the colorful border frame around the blue box */
-            height: 100vh;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
+    margin: 0;
+    /* CHANGED: Dynamic padding reduces the colorful border frame size on mobile */
+    padding: 3vw; 
+    min-height: 100vh;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
 
-        /* 2. Style the big light blue rectangle */
-        .blue-container {
-    		background-color: #cce2ff; 
-    		width: 100%;
-    		height: auto; /* Change from 200% to auto */
-    		padding: 80px;            
-    		box-sizing: border-box;
-    		overflow: auto; /* Adds a scrollbar if the content ever gets too large */
-		}
+/* 2. Style the big light blue rectangle */
+.blue-container {
+    background-color: #cce2ff; 
+    width: 100%;
+    height: auto; 
+    /* CHANGED: Dynamic padding ensures the text box is spacious on desktop but doesn't break phones */
+    padding: 5%;            
+    box-sizing: border-box;
+    overflow: auto; 
+}
 
+/* 3. Style the text font and size */
+.blue-container p {
+    /* CHANGED: Using clamping so the font shrinks automatically on smaller screens */
+    font-size: clamp(1rem, 4vw, 1.5rem);          
+    margin: 0;
+    color: #000000;
+}
 
-        /* 3. Style the text font and size */
-        .blue-container p {
-            font-size: 24px;          /* Makes the text large like your image */
-            margin: 0;
-            color: #000000;
-        }
-		.container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        .results {
-            background: #eef1f6;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-        .results p {
-            margin: 8px 0;
-            font-size: 15px;
-        }
-        .label {
-            font-weight: bold;
-            color: #34495e;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #bdc3c7;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #3498db;
-            color: white;
-        }
-		.navbar {
-            background-color: #add8e6; /* Light blue color */
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            height: 60px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+.container {
+    /* CHANGED: Changed max-width to a percentage fallback for absolute safety */
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    /* CHANGED: Smaller padding for mobile screens */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
 
-        .navbar a {
-            color: #333333;
-            text-decoration: none;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s, color 0.3s;
-            border-radius: 4px;
-        }
+.input-group {
+    margin-bottom: 20px;
+}
 
-        .navbar a:hover {
-            background-color: #87ceeb; /* Slightly darker sky blue on hover */
-            color: #000000;
-        }
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+.results {
+    background: #eef1f6;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.results p {
+    margin: 0.5rem 0;
+    font-size: 0.9375rem;
+}
+
+.label {
+    font-weight: bold;
+    color: #34495e;
+}
+
+/* CHANGED: Tables easily break layouts on small devices. Wrapped in responsive mode below */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #bdc3c7;
+    padding: 8px;
+    text-align: center;
+}
+
+th {
+    background-color: #3498db;
+    color: white;
+}
+
+.navbar {
+    background-color: #add8e6; 
+    overflow: hidden;
+    display: flex;
+    /* CHANGED: Wraps navigation items down if they run out of horizontal room */
+    flex-wrap: wrap; 
+    align-items: center;
+    padding: 10px;
+    /* CHANGED: Removed fixed height to prevent menu link text overlapping */
+    min-height: 60px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+.navbar a {
+    color: #333333;
+    text-decoration: none;
+    padding: 10px 15px;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 4px;
+}
+
+.navbar a:hover {
+    background-color: #87ceeb; 
+    color: #000000;
+}
+
+/* ==========================================================================
+   ADDED: Specific fixes for narrow phone screens (under 600px width)
+   ========================================================================== */
+@media (max-width: 600px) {
+    body {
+        padding: 10px; /* Bare minimum outer frame border size on mobile */
+    }
+    
+    .blue-container {
+        padding: 20px 15px; /* Shrinks huge container spaces */
+    }
+    
+    .navbar {
+        justify-content: center; /* Centers menu items nicely on mobile phones */
+    }
+    
+    .navbar a {
+        font-size: 0.9rem; /* Slightly smaller text for fit */
+        padding: 8px 12px;
+    }
+
+    /* Makes the table horizontally scrollable if columns overflow the screen */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
