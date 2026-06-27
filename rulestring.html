@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script>function getRandomRuleString() {
+  // Helper to generate a unique, sorted string of random digits (0-8)
+  const generateCondition = () => {
+    const count = Math.floor(Math.random() * 9); // 0 to 8 neighbors
+    const digits = new Set();
+    while (digits.size < count) {
+      digits.add(Math.floor(Math.random() * 9));
+    }
+    return Array.from(digits).sort().join('');
+  };
+
+  const b = generateCondition();
+  const s = generateCondition();
+
+  return `B${b}/S${s}`;
+}</script>
+<script src="imp.js" defer></script>
+</head>
+<body>
+<div id="custom-header"></div>
+<p>test</p>
+<div class="blue-container">
+
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
