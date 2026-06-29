@@ -7,11 +7,11 @@
 
 </head>
 <body>
-<nav class="navbar">
+<!--<nav class="navbar">
 <a href="../index.html">Home</a>
 <a href="../account.html">About</a>
-</nav>
-
+</nav> -->
+<custom-header></custom-header>
 
 <div class="blue-container">
 <h1>B35/S36: Stressful </h1>
@@ -87,21 +87,21 @@ Synthestatic, is a life-like cellular automoton that explodes. </p>
 <p>Parasites are also contagious, they can go from one line to another</p>
 <p>Another type of parasite, instead of growing on the sides, it grows <strong>in</strong> the line.</p>
 <figure>
-  <img src="_natlad.PNG" alt="STARS">
+  <img src="natlad.PNG" alt="STARS">
   <figcaption>Natural Line </figcaption>
 </figure>
 <figure>
-  <img src="_natcry.PNG" alt="STARS">
+  <img src="natcry.PNG" alt="STARS">
   <figcaption>Crystal formation </figcaption>
 </figure>
 <div style="display: flex; gap: 20px;">
   <figure style="flex: 1; margin: 0;">
-    <img src="_natpar1.PNG" alt="J sidways" style="width: 50%;">
+    <img src="natpar1.PNG" alt="J sidways" style="width: 50%;">
     <figcaption>Outer-growing parasite</figcaption>
   </figure>
   
   <figure style="flex: 1; margin: 0;">
-    <img src="_natpar2.PNG" alt="kaboom" style="width: 50%;">
+    <img src="natpar2.PNG" alt="kaboom" style="width: 50%;">
     <figcaption>Inner-growing parasite</figcaption>
   </figure>
 </div>
@@ -182,6 +182,10 @@ bobobo$41bob13o6b14obo2bobobobo$41bobo12bob3o14bob4obobobo$44b4o2b8o3b
 </p>
 </div>
 
-
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
 </body>
 </html>
