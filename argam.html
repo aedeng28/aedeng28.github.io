@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="imp.js" defer></script>
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+<p> Note; to extend it, remix the project <a href='https://scratch.mit.edu/projects/1334343570/'>here.</a> Also, this page updates automatically.</p>
+<iframe src="https://scratch.mit.edu/projects/1334343570/embed" 
+        allowtransparency="true" 
+        width="485" height="402" 
+        frameborder="0" scrolling="no" 
+        allowfullscreen></iframe>
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
