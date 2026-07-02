@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="imp.js" defer></script>
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+<div class="linkz">
+<a href=converter.html>To universal base converter</a>
+<br>
+<a href=confrac.html>Continued frafction converter</a>
+<br>
+<a href=argam.html>Argam/Aperial extension</a>                                               
+<br>
+<a href=phi.html>To base phi converter</a>
+<br>
+<a href=protoPrime.html>testing thing</a>
+<br>
+<a href=disc/conway.html>conway gol </a>
+<br>
+</div>
+<input id='goto'>
+<button onclick="window.location.href=`/${getinput("get")}`">
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
