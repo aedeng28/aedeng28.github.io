@@ -6,10 +6,12 @@
 <link rel="stylesheet" href="style.css">
 <script src="imp.js" defer></script>
 <script>
-document.getElementById('goButton').addEventListener('click', function() {
-    // Ensure getinput() is defined and returns a string
-    const destination = getinput("goto"); 
-    window.location.href = '/' + destination;
+document.addEventListener('DOMContentLoaded', function() {
+    // This code waits until the HTML is fully loaded
+    document.getElementById('goButton').addEventListener('click', function() {
+        const destination = getinput("goto"); 
+        window.location.href = '/' + destination;
+    });
 });
 </script>
 </head>
