@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <script src="imp.js" defer></script>
+<script>
+document.getElementById('goButton').addEventListener('click', function() {
+    // Ensure getinput() is defined and returns a string
+    const destination = getinput("goto"); 
+    window.location.href = '/' + destination;
+});
+</script>
 </head>
 <body>
 <div id="custom-header"></div>
@@ -25,7 +32,7 @@
 <br>
 </div>
 <input id='goto'>
-<button onclick="window.location.href=`/${getinput("goto")}`">go</button>
+<button id="goButton">go</button>
 </div>
 
 <script>
