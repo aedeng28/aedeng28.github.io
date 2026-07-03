@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="imp.js" defer></script>
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+<p>The Numberblocks Media Archival Project (or NBMAP for shgort) is a project with the goal of archiving numberblock media. </p>
+<a href="https://drive.google.com/drive/folders/1MVNFUyBU2bopNdYfSLu4C6IU8ZU__tbT?usp=sharing">Link to download !</a>
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
