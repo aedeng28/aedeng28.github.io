@@ -10,11 +10,27 @@
 <div id="custom-header"></div>
 
 <div class="blue-container">
-<p>This an argam symbol generator made in Websim. Original project is <a href="https://tinyurl.com/argamg">here.</a></p>
-<iframe src="https://tinyurl.com/argamg" title="ArgamGen"></iframe>
-
+<p>This an argam symbol generator made in Websim. Original project is <a href="https://tinyurl.com/argamg">here.</a></<!-- Wrapper that looks like a phone body -->
+<div style="
+  width: 100%; 
+  max-width: 390px; 
+  aspect-ratio: 9 / 19.5; 
+  margin: 20px auto; 
+  border: 12px solid #222; 
+  border-radius: 36px; 
+  overflow: hidden; 
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+">
+  <!-- The iframe takes up 100% of the phone body -->
+  <iframe 
+    src="https://tinyurl.com/argamg" 
+    title="ArgamGen " 
+    style="width: 100%; height: 100%; border: none;"
+  ></iframe>
 </div>
 
+
+</div>
 <script>
   fetch('/header.html')
     .then(res => res.text())
