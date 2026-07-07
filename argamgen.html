@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="imp.js" defer></script>
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+<p>This an argam symbol generator made in Websim. Original project is <a href="https://tinyurl.com/argamg">here.</a></p>
+<iframe src="https://tinyurl.com/argamg" title="ArgamGen"></iframe>
+
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
