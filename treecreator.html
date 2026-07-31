@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Base a/b Representation Tree (Multiples of a)</title>
+  <title>Complete Base a/b Representation Tree</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -11,18 +11,18 @@
     button:hover { background: #00cc00; }
     input { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 6px; width: 60px; font-family: monospace; font-size: 14px; text-align: center; }
     #svg-layer { border: 1px solid #333; display: block; background: #050505; margin-top: 10px; width: 100%; height: 600px; }
-    line { stroke: #00ff00; stroke-width: 2; }
+    line { stroke: #00ff00; stroke-width: 1.5; }
     circle { fill: #000000; stroke: #00ff00; stroke-width: 2; cursor: pointer; }
     circle:hover { fill: #003300; }
-    text { fill: #00ff00; font-size: 13px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
-    .digit-label { fill: #ffaa00; font-size: 12px; font-weight: bold; }
+    text { fill: #00ff00; font-size: 12px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
+    .digit-label { fill: #ffaa00; font-size: 11px; font-weight: bold; }
     #info-panel { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.5; }
-    #tooltip { background: #111; color: #00ff00; padding: 10px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 13px; font-family: monospace; box-shadow: 0px 0px 10px #00ff00; }
+    #tooltip { background: #111; color: #00ff00; padding: 10px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 13px; font-family: monospace; box-shadow: 0px 0px 10px #00ff00; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: CANONICAL REPRESENTATION TREE (MULTIPLES OF a)</h1>
+  <h1>[SYS_STATUS]: COMPLETE BASE a/b TREE (ALL MULTIPLES OF a)</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -34,36 +34,36 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
-      <label>Root Node (Multiple of a):</label>
-      <input type="number" id="rootVal" value="3">
-    </div>
-    <div class="param-group">
       <label>Max Layers:</label>
       <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">GENERATE TREE</button>
+    <button id="renderBtn">GENERATE FULL MULTIPLES TREE</button>
   </div>
 
   <div id="tooltip"></div>
-  <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
+  <svg id="svg-layer" viewBox="0 0 1200 650"></svg>
   
   <div id="info-panel">
-    * <strong>Constraint Rule:</strong> Every node in this tree is strictly a multiple of your base numerator (a). <br>
-    * <strong>The Representation:</strong> Hover over any node to view the string path. Add a <strong>"0"</strong> to the end to get its complete base a/b positional expansion!
+    * <strong>Full Structural Branching:</strong> Every node generated here is an independent integer multiple of <strong>a</strong>.<br>
+    * <strong>The Expansion:</strong> Hover over any node to view its generated path string. Add a trailing <strong>"0"</strong> to get its complete base a/b representation string!
   </div>
 
   <script>
-    // Filters and calculates children that are STRICTLY multiples of a
-    function getValidMultiplesChildren(x, a, b) {
+    // Universal Akiyama-Frougny branch engine mapping ALL valid multiples of a
+    function getAllMultiplesBranches(x, a, b) {
       let validBranches = [];
-      // Alphabet digits for fractional base a/b systems range from 0 to a-1
+      // Iterates across the complete digit alphabet [0, a-1]
       for (let d = 0; d < a; d++) {
-        // Core inverse positional step equation
-        let computedChild = ((b * x) / a) + d;
-        
-        // Ensure the output is an integer AND a perfect multiple of 'a'
-        if (Number.isInteger(computedChild) && computedChild % a === 0) {
-          validBranches.push({ value: computedChild, digit: d });
+        // Prevent infinite self-loops on root zero
+        if (x === 0 && d === 0) continue;
+
+        let testVal = (a * x) + d;
+        if (testVal % b === 0) {
+          let nextState = testVal / b;
+          // Ensure the target is a valid integer AND a perfect multiple of 'a'
+          if (nextState % a === 0) {
+            validBranches.push({ value: nextState, digit: d });
+          }
         }
       }
       return validBranches;
@@ -72,29 +72,22 @@
     function buildTreeData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
-      const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
-
-      // Enforcement validation checkpoint
-      if (isNaN(rootVal) || rootVal % a !== 0) {
-        alert(`Error: The root node must be a perfect multiple of a (${a})!`);
-        return null;
-      }
 
       let nodes = [];
       let edges = [];
       let globalIdCounter = 0;
 
-      // Queue keeps track of the layout canvas horizontal fields to balance spacing
+      // Root element is universally locked to 0
       let queue = [{ 
         id: globalIdCounter++, 
-        val: rootVal, 
+        val: 0, 
         pathString: "", 
         depth: 0, 
-        x: 500, 
+        x: 600, 
         y: 50, 
         xMin: 0, 
-        xMax: 1000 
+        xMax: 1200 
       }];
 
       while (queue.length > 0) {
@@ -103,10 +96,12 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = getValidMultiplesChildren(current.val, a, b);
+        // Computes ALL available valid children simultaneously to force wide structural fanning
+        let children = getAllMultiplesBranches(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
+        // Distributes the current node's screen real estate evenly across all children
         let segmentWidth = (current.xMax - current.xMin) / nChildren;
 
         children.forEach((child, index) => {
@@ -115,7 +110,6 @@
           let childX = childXMin + (segmentWidth / 2);
           let childY = 50 + ((current.depth + 1) * 110);
 
-          // Update the path representation tracker string
           let updatedPath = current.pathString === "" ? `${child.digit}` : `${current.pathString}${child.digit}`;
 
           let childNode = {
@@ -153,32 +147,32 @@
 
       let structuralMarkup = "";
 
-      // Step 1: Draw branch connector lines
+      // Step 1: Draw lines for all parallel branches
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
         if (pNode && cNode) {
           structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
           let mx = (pNode.x + cNode.x) / 2;
-          let my = (pNode.y + cNode.y) / 2 - 10;
+          let my = (pNode.y + cNode.y) / 2 - 8;
           structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">${edge.digit}</text>`;
         }
       });
 
-      // Step 2: Draw node markers showing the accurate integers
+      // Step 2: Draw node labels over the branch intersections
       data.nodes.forEach(node => {
         let cleanPath = node.pathString === "" ? "[Root]" : node.pathString;
         let finalRepresentation = node.pathString === "" ? "0" : `${node.pathString}0`;
 
         let tooltipText = `
-          <strong>Node Value:</strong> ${node.val}<br>
+          <strong>Value:</strong> ${node.val}<br>
           <strong>Path Taken:</strong> ${cleanPath}<br>
-          <strong>Base Expansion String (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
+          <strong>Base Expansion (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
         `;
 
         structuralMarkup += `
           <g class="node-group" data-tip="${tooltipText}">
-            <circle cx="${node.x}" cy="${node.y}" r="20" />
+            <circle cx="${node.x}" cy="${node.y}" r="18" />
             <text x="${node.x}" y="${node.y}">${node.val}</text>
           </g>
         `;
@@ -186,7 +180,7 @@
 
       canvas.innerHTML = structuralMarkup;
 
-      // Step 3: Wire tooltip tracking updates
+      // Step 3: Enable the hover tooltip tracking system
       document.querySelectorAll('.node-group').forEach(item => {
         item.addEventListener('mousemove', function(e) {
           tooltip.style.display = 'block';
