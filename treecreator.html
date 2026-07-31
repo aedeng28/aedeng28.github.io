@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>True Base a/b Integer Tree Visualizer</title>
+  <title>True Positional Base a/b Tree Visualizer</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -12,15 +12,17 @@
     input { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 6px; width: 60px; font-family: monospace; font-size: 14px; text-align: center; }
     #svg-layer { border: 1px solid #333; display: block; background: #050505; margin-top: 10px; width: 100%; height: 600px; }
     line { stroke: #00ff00; stroke-width: 2; }
-    circle { fill: #000000; stroke: #00ff00; stroke-width: 2; }
-    text { fill: #00ff00; font-size: 13px; text-anchor: middle; dominant-baseline: central; font-weight: bold; }
+    circle { fill: #000000; stroke: #00ff00; stroke-width: 2; cursor: pointer; }
+    circle:hover { fill: #003300; }
+    text { fill: #00ff00; font-size: 13px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
     .digit-label { fill: #ffaa00; font-size: 11px; }
     #info-panel { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.5; }
+    #tooltip { background: #111; color: #ffaa00; padding: 8px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 12px; }
   </style>
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: CANONICAL INTEGER BASE a/b TREE</h1>
+  <h1>[SYS_STATUS]: TRUE BASE a/b REPRESENTATION TREE</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -32,33 +34,33 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
-      <label>Root Integer State:</label>
+      <label>Root Integer (x):</label>
       <input type="number" id="rootVal" value="2">
     </div>
     <div class="param-group">
-      <label>Max Depth Layers:</label>
-      <input type="number" id="maxDepth" value="5" min="1" max="7">
+      <label>Max Layers:</label>
+      <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">DRAW INTEGER TREE</button>
+    <button id="renderBtn">RENDER CORRECTED TREE</button>
   </div>
 
+  <div id="tooltip"></div>
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * <strong>Integer-Only Nodes:</strong> Displays the authentic sequential integers mapped by the base a/b tree algorithms.
+    * <strong>Verification Math:</strong> Hover over any child node to view its exact positional transition formula: <code>x_child = (a * x_parent + d) / b</code>
   </div>
 
   <script>
-    // Universal forward calculation math logic for any pure integer a/b system
-    function calculateIntegerChildren(x, a, b) {
+    // Pure canonical forward state transition algorithm
+    function calculateCorrectChildren(x, a, b) {
       let validBranches = [];
-      // Iterates through valid standard positional digits [0, a-1]
+      // The digit set for a/b fractional systems must be digits d < a
       for (let d = 0; d < a; d++) {
-        // Base a/b integer sequence generation rules check if steps yield integers
-        let numerator = (a * x) - d;
-        if (numerator % b === 0) {
-          let nextIntegerState = numerator / b;
-          validBranches.push({ value: nextIntegerState, digit: d });
+        let testNumerator = (a * x) + d;
+        if (testNumerator % b === 0) {
+          let nextStateValue = testNumerator / b;
+          validBranches.push({ value: nextStateValue, digit: d });
         }
       }
       return validBranches;
@@ -68,7 +70,7 @@
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
       const rootVal = parseInt(document.getElementById("rootVal").value);
-      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 5;
+      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
 
       if (isNaN(rootVal)) return null;
 
@@ -76,8 +78,8 @@
       let edges = [];
       let globalIdCounter = 0;
 
-      // Queue tracking layout space configurations alongside integer states
-      let queue = [{ id: globalIdCounter++, val: rootVal, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
+      // Queue manages geometric spread bounds to cleanly avoid overlapping branches
+      let queue = [{ id: globalIdCounter++, val: rootVal, parentVal: null, formulaDigit: null, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
 
       while (queue.length > 0) {
         let current = queue.shift();
@@ -85,7 +87,7 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateIntegerChildren(current.val, a, b);
+        let children = calculateCorrectChildren(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
@@ -95,11 +97,13 @@
           let childXMin = current.xMin + (index * segmentWidth);
           let childXMax = childXMin + segmentWidth;
           let childX = childXMin + (segmentWidth / 2);
-          let childY = 50 + ((current.depth + 1) * 100);
+          let childY = 50 + ((current.depth + 1) * 110);
 
           let childNode = {
             id: globalIdCounter++,
             val: child.value,
+            parentVal: current.val,
+            formulaDigit: child.digit,
             depth: current.depth + 1,
             x: childX,
             y: childY,
@@ -122,15 +126,19 @@
 
     function render() {
       const canvas = document.getElementById("svg-layer");
+      const tooltip = document.getElementById("tooltip");
       if (!canvas) return;
       
       canvas.innerHTML = '';
       const data = buildTreeData();
       if (!data) return;
 
+      const a = document.getElementById("baseA").value;
+      const b = document.getElementById("baseB").value;
+
       let structuralMarkup = "";
 
-      // Step 1: Render connection lines with digit tags
+      // Step 1: Draw connection lines
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
@@ -142,17 +150,35 @@
         }
       });
 
-      // Step 2: Render pure integer nodes
+      // Step 2: Draw nodes with true computed integers
       data.nodes.forEach(node => {
+        // Construct clear interactive string attributes to verify math live on screen
+        let tooltipText = node.parentVal !== null 
+          ? `Math: (${a} * ${node.parentVal} + ${node.formulaDigit}) / ${b} = ${node.val}`
+          : `Root Node Start Vector: ${node.val}`;
+
         structuralMarkup += `
-          <g>
-            <circle cx="${node.x}" cy="${node.y}" r="18" />
+          <g class="node-group" data-tip="${tooltipText}">
+            <circle cx="${node.x}" cy="${node.y}" r="20" />
             <text x="${node.x}" y="${node.y}">${node.val}</text>
           </g>
         `;
       });
 
       canvas.innerHTML = structuralMarkup;
+
+      // Step 3: Attach crisp mouse events for live math trace updates
+      document.querySelectorAll('.node-group').forEach(item => {
+        item.addEventListener('mousemove', function(e) {
+          tooltip.style.display = 'block';
+          tooltip.innerHTML = this.getAttribute('data-tip');
+          tooltip.style.left = (e.pageX + 15) + 'px';
+          tooltip.style.top = (e.pageY + 15) + 'px';
+        });
+        item.addEventListener('mouseleave', function() {
+          tooltip.style.display = 'none';
+        });
+      });
     }
 
     document.getElementById("renderBtn").addEventListener("click", render);
