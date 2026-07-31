@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Base a/b Canonical Representation Tree</title>
+  <title>Base a/b Representation Tree (Multiples of a)</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -22,7 +22,7 @@
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: CANONICAL REPRESENTATION TREE (BASE a/b)</h1>
+  <h1>[SYS_STATUS]: CANONICAL REPRESENTATION TREE (MULTIPLES OF a)</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -34,29 +34,36 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
+      <label>Root Node (Multiple of a):</label>
+      <input type="number" id="rootVal" value="3">
+    </div>
+    <div class="param-group">
       <label>Max Layers:</label>
       <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">GENERATE PATH REPRESENTATIONS</button>
+    <button id="renderBtn">GENERATE TREE</button>
   </div>
 
   <div id="tooltip"></div>
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * <strong>The Expansion Rule:</strong> Hover over any integer node. The popup will display the exact path of branch digits taken to reach it. Just add a <strong>"0"</strong> to the end of that string to form its accurate base a/b representation!
+    * <strong>Constraint Rule:</strong> Every node in this tree is strictly a multiple of your base numerator (a). <br>
+    * <strong>The Representation:</strong> Hover over any node to view the string path. Add a <strong>"0"</strong> to the end to get its complete base a/b positional expansion!
   </div>
 
   <script>
-    // Pure Akiyama-Frougny forward transition engine
-    function calculateRepresentationChildren(x, a, b) {
+    // Filters and calculates children that are STRICTLY multiples of a
+    function getValidMultiplesChildren(x, a, b) {
       let validBranches = [];
-      // Valid alphabet digits for fractional base a/b range from 0 to a-1
+      // Alphabet digits for fractional base a/b systems range from 0 to a-1
       for (let d = 0; d < a; d++) {
-        let total = (a * x) + d;
-        if (total % b === 0) {
-          let childValue = total / b;
-          validBranches.push({ value: childValue, digit: d });
+        // Core inverse positional step equation
+        let computedChild = ((b * x) / a) + d;
+        
+        // Ensure the output is an integer AND a perfect multiple of 'a'
+        if (Number.isInteger(computedChild) && computedChild % a === 0) {
+          validBranches.push({ value: computedChild, digit: d });
         }
       }
       return validBranches;
@@ -65,16 +72,23 @@
     function buildTreeData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
+      const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
+
+      // Enforcement validation checkpoint
+      if (isNaN(rootVal) || rootVal % a !== 0) {
+        alert(`Error: The root node must be a perfect multiple of a (${a})!`);
+        return null;
+      }
 
       let nodes = [];
       let edges = [];
       let globalIdCounter = 0;
 
-      // The canonical base a/b representation tree always originates from root 0
+      // Queue keeps track of the layout canvas horizontal fields to balance spacing
       let queue = [{ 
         id: globalIdCounter++, 
-        val: 0, 
+        val: rootVal, 
         pathString: "", 
         depth: 0, 
         x: 500, 
@@ -89,7 +103,7 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateRepresentationChildren(current.val, a, b);
+        let children = getValidMultiplesChildren(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
@@ -139,7 +153,7 @@
 
       let structuralMarkup = "";
 
-      // Step 1: Draw connection line segments
+      // Step 1: Draw branch connector lines
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
@@ -151,15 +165,15 @@
         }
       });
 
-      // Step 2: Draw nodes loaded with precise matching sequential integers
+      // Step 2: Draw node markers showing the accurate integers
       data.nodes.forEach(node => {
         let cleanPath = node.pathString === "" ? "[Root]" : node.pathString;
         let finalRepresentation = node.pathString === "" ? "0" : `${node.pathString}0`;
 
         let tooltipText = `
-          <strong>Value:</strong> ${node.val}<br>
+          <strong>Node Value:</strong> ${node.val}<br>
           <strong>Path Taken:</strong> ${cleanPath}<br>
-          <strong>Base Expansion (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
+          <strong>Base Expansion String (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
         `;
 
         structuralMarkup += `
@@ -172,7 +186,7 @@
 
       canvas.innerHTML = structuralMarkup;
 
-      // Step 3: Wire high-contrast tooltip events for representation tracing
+      // Step 3: Wire tooltip tracking updates
       document.querySelectorAll('.node-group').forEach(item => {
         item.addEventListener('mousemove', function(e) {
           tooltip.style.display = 'block';
