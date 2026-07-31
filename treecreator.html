@@ -1,198 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Complete Base a/b Tree Visualizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Base a/b Tree</title>
   <style>
-    body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
-    .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-    .param-group { display: flex; align-items: center; gap: 8px; }
-    button { background: #00ff00; color: #000; font-weight: bold; padding: 8px 20px; border: none; cursor: pointer; font-family: monospace; font-size: 14px; }
-    button:hover { background: #00cc00; }
-    input { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 6px; width: 60px; font-family: monospace; font-size: 14px; text-align: center; }
-    #svg-layer { border: 1px solid #333; display: block; background: #050505; margin-top: 10px; width: 100%; height: 600px; }
-    line { stroke: #00ff00; stroke-width: 1.5; }
-    circle { fill: #000000; stroke: #00ff00; stroke-width: 2; cursor: pointer; }
-    circle:hover { fill: #003300; }
-    text { fill: #00ff00; font-size: 12px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
-    .digit-label { fill: #ffaa00; font-size: 11px; font-weight: bold; }
-    #info-panel { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.5; }
-    #tooltip { background: #111; color: #00ff00; padding: 10px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 13px; font-family: monospace; box-shadow: 0px 0px 10px #00ff00; pointer-events: none; }
+    body { font-family: monospace; background: #000; color: #0f0; margin: 0; padding: 10px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; }
+    h1 { margin: 5px 0; font-size: 1.1rem; flex-shrink: 0; }
+    .controls { background: #111; padding: 8px; border: 1px solid #0f0; margin-bottom: 8px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+    .param { display: flex; align-items: center; gap: 4px; }
+    button { background: #0f0; color: #000; font-weight: bold; padding: 5px 10px; border: none; cursor: pointer; font-family: monospace; font-size: 12px; }
+    input { background: #000; color: #0f0; border: 1px solid #0f0; padding: 3px; width: 40px; font-family: monospace; font-size: 12px; text-align: center; }
+    #canvas-container { position: relative; width: 100%; flex-grow: 1; border: 1px solid #333; background: #050505; overflow: hidden; }
+    svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+    svg:active { cursor: grabbing; }
+    line { stroke: #0f0; stroke-width: 1.5; opacity: 0.6; }
+    circle { fill: #000; stroke: #0f0; stroke-width: 2; }
+    text { fill: #0f0; font-size: 11px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
+    .digit { fill: #fa0; font-size: 10px; font-weight: bold; }
+    .hud { position: absolute; bottom: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+    .btn { width: 40px; height: 40px; font-size: 18px; background: #111; color: #0f0; border: 1px solid #0f0; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
+    .btn:active { background: #0f0; color: #000; }
+    #tip { background: #111; color: #0f0; padding: 8px; border: 1px solid #0f0; position: absolute; display: none; font-size: 12px; font-family: monospace; box-shadow: 0 0 8px #0f0; pointer-events: none; z-index: 5; max-width: 220px; }
   </style>
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: BASE a/b TREE (ALL MULTIPLES OF a)</h1>
+  <h1>[SYS_STATUS]: BASE a/b TREE (ALL MULTIPLES)</h1>
   
   <div class="controls">
-    <div class="param-group">
-      <label>Base Numerator (a):</label>
-      <input type="number" id="baseA" value="3" min="2">
-    </div>
-    <div class="param-group">
-      <label>Base Denominator (b):</label>
-      <input type="number" id="baseB" value="2" min="1">
-    </div>
-    <div class="param-group">
-      <label>Max Layers:</label>
-      <input type="number" id="maxDepth" value="4" min="1" max="6">
-    </div>
-    <button id="renderBtn">GENERATE TREE</button>
+    <div class="param"><label>a:</label><input type="number" id="baseA" value="3" min="2"></div>
+    <div class="param"><label>b:</label><input type="number" id="baseB" value="2" min="1"></div>
+    <div class="param"><label>Layers:</label><input type="number" id="maxDepth" value="5" min="1" max="10"></div>
+    <button id="renderBtn">GENERATE</button>
   </div>
 
-  <div id="tooltip"></div>
-  <svg id="svg-layer" viewBox="0 0 1200 650"></svg>
-  
-  <div id="info-panel">
-    * <strong>The Tree Architecture:</strong> Generates all consecutive integer multiples of <strong>a</strong> sequentially. <br>
-    * <strong>Verification:</strong> Hover over any node. Read its path string and append a <strong>"0"</strong> to form its exact base a/b representation string.
+  <div id="canvas-container">
+    <div id="tip"></div>
+    <div class="hud">
+      <div class="btn" id="zIn">+</div>
+      <div class="btn" id="zOut">−</div>
+      <div class="btn" id="home">⌂</div>
+    </div>
+    <svg id="svg"></svg>
   </div>
 
   <script>
-    // Universal branch evaluator that handles the root and generates all multiples of a
-    function getFullMultiplesBranches(x, a, b) {
-      let validBranches = [];
-      
-      // Iterate through the digit alphabet options [0, a-1]
-      for (let d = 0; d < a; d++) {
-        // To break the root 0 -> 0 infinite loop trap, we skip the d=0 option on the root node
-        if (x === 0 && d === 0) continue;
+    const svg = document.getElementById("svg");
+    const tip = document.getElementById("tip");
+    let view = { x: 19000, y: 0, w: 2000, h: 1200 }, isDrag = false, start = { x: 0, y: 0 };
 
-        // Formula ensures children scale outward as legal multiples of a
-        let testVal = (a * x) + (d * a);
-        if (testVal % b === 0) {
-          let childState = testVal / b;
-          validBranches.push({ value: childState, digit: d });
-        }
+    function getBranches(x, a, b) {
+      let res = [];
+      for (let d = 0; d < a; d++) {
+        if (x === 0 && d === 0) continue;
+        let v = (a * x) + (d * a);
+        if (v % b === 0) res.push({ val: v / b, d: d });
       }
-      return validBranches;
+      return res;
     }
 
-    function buildTreeData() {
+    function buildData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
-      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
+      const max = parseInt(document.getElementById("maxDepth").value) || 5;
+      let nodes = [], edges = [], id = 0;
+      let q = [{ id: id++, val: 0, path: "", depth: 0, x: 20000, y: 80, min: 0, max: 40000 }];
 
-      let nodes = [];
-      let edges = [];
-      let globalIdCounter = 0;
+      while (q.length > 0) {
+        let curr = q.shift();
+        nodes.push(curr);
+        if (curr.depth >= max) continue;
 
-      // Tree begins cleanly from base-0 root foundation
-      let queue = [{ 
-        id: globalIdCounter++, 
-        val: 0, 
-        pathString: "", 
-        depth: 0, 
-        x: 600, 
-        y: 50, 
-        xMin: 0, 
-        xMax: 1200 
-      }];
+        let kids = getBranches(curr.val, a, b);
+        if (kids.length === 0) continue;
+        let w = (curr.max - curr.min) / kids.length;
 
-      while (queue.length > 0) {
-        let current = queue.shift();
-        nodes.push(current);
-
-        if (current.depth >= maxDepth) continue;
-
-        let children = getFullMultiplesBranches(current.val, a, b);
-        let nChildren = children.length;
-        if (nChildren === 0) continue;
-
-        // Slices horizontal screen parameters evenly among siblings
-        let segmentWidth = (current.xMax - current.xMin) / nChildren;
-
-        children.forEach((child, index) => {
-          let childXMin = current.xMin + (index * segmentWidth);
-          let childXMax = childXMin + segmentWidth;
-          let childX = childXMin + (segmentWidth / 2);
-          let childY = 50 + ((current.depth + 1) * 110);
-
-          let updatedPath = current.pathString === "" ? `${child.digit}` : `${current.pathString}${child.digit}`;
-
-          let childNode = {
-            id: globalIdCounter++,
-            val: child.value,
-            pathString: updatedPath,
-            depth: current.depth + 1,
-            x: childX,
-            y: childY,
-            xMin: childXMin,
-            xMax: childXMax
-          };
-
-          edges.push({
-            fromId: current.id,
-            toId: childNode.id,
-            digit: child.digit
-          });
-
-          queue.push(childNode);
+        kids.forEach((k, i) => {
+          let xMin = curr.min + (i * w), xMax = xMin + w;
+          let child = { id: id++, val: k.val, path: curr.path + k.d, depth: curr.depth + 1, x: xMin + w/2, y: 80 + (curr.depth + 1)*160, min: xMin, max: xMax };
+          edges.push({ from: curr.id, to: child.id, d: k.d });
+          q.push(child);
         });
       }
-
       return { nodes, edges };
     }
 
+    function showView() { svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${view.h}`); }
+    function resetView() { view = { x: 19000, y: 0, w: 2000, h: 1200 }; showView(); }
+
     function render() {
-      const canvas = document.getElementById("svg-layer");
-      const tooltip = document.getElementById("tooltip");
-      if (!canvas) return;
-      
-      canvas.innerHTML = '';
-      const data = buildTreeData();
+      svg.innerHTML = '';
+      const data = buildData();
       if (!data) return;
+      let html = "";
 
-      let structuralMarkup = "";
-
-      // Step 1: Render branch links
-      data.edges.forEach(edge => {
-        let pNode = data.nodes.find(n => n.id === edge.fromId);
-        let cNode = data.nodes.find(n => n.id === edge.toId);
-        if (pNode && cNode) {
-          structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
-          let mx = (pNode.x + cNode.x) / 2;
-          let my = (pNode.y + cNode.y) / 2 - 8;
-          structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">${edge.digit}</text>`;
+      data.edges.forEach(e => {
+        let p = data.nodes.find(n => n.id === e.from), c = data.nodes.find(n => n.id === e.to);
+        if (p && c) {
+          html += `<line x1="${p.x}" y1="${p.y}" x2="${c.x}" y2="${c.y}" />`;
+          html += `<text x="${(p.x+c.x)/2}" y="${(p.y+c.y)/2 - 8}" class="digit">${e.d}</text>`;
         }
       });
 
-      // Step 2: Render nodes
-      data.nodes.forEach(node => {
-        let cleanPath = node.pathString === "" ? "[Root]" : node.pathString;
-        let finalRepresentation = node.pathString === "" ? "0" : `${node.pathString}0`;
-
-        let tooltipText = `
-          <strong>Value:</strong> ${node.val}<br>
-          <strong>Path:</strong> ${cleanPath}<br>
-          <strong>Base Expansion (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
-        `;
-
-        structuralMarkup += `
-          <g class="node-group" data-tip="${tooltipText}">
-            <circle cx="${node.x}" cy="${node.y}" r="18" />
-            <text x="${node.x}" y="${node.y}">${node.val}</text>
-          </g>
-        `;
+      data.nodes.forEach(n => {
+        let txt = `<strong>Val:</strong> ${n.val}<br><strong>Path:</strong> ${n.path||'0'}<br><strong>Base a/b:</strong> <span style='color:#fa0'>${n.path||'0'}0</span>`;
+        html += `<g class="ng" data-tip="${txt}"><circle cx="${n.x}" cy="${n.y}" r="22" /><text x="${n.x}" y="${n.y}">${n.val}</text></g>`;
       });
 
-      canvas.innerHTML = structuralMarkup;
+      svg.innerHTML = html;
+      resetView();
 
-      // Step 3: Map interactive popup hover systems
-      document.querySelectorAll('.node-group').forEach(item => {
-        item.addEventListener('mousemove', function(e) {
-          tooltip.style.display = 'block';
-          tooltip.innerHTML = this.getAttribute('data-tip');
-          tooltip.style.left = (e.pageX + 15) + 'px';
-          tooltip.style.top = (e.pageY + 15) + 'px';
-        });
-        item.addEventListener('mouseleave', function() {
-          tooltip.style.display = 'none';
-        });
+      document.querySelectorAll('.ng').forEach(item => {
+        const move = (e) => {
+          tip.style.display = 'block'; tip.innerHTML = item.getAttribute('data-tip');
+          let cx = e.clientX || (e.touches && e.touches[0].clientX), cy = e.clientY || (e.touches && e.touches[0].clientY);
+          tip.style.left = (cx + 12) + 'px'; tip.style.top = (cy + 12) + 'px';
+        };
+        item.addEventListener('mousemove', move);
+        item.addEventListener('touchstart', (e) => { e.stopPropagation(); move(e); });
+        item.addEventListener('mouseleave', () => tip.style.display = 'none');
       });
     }
 
+    function zoom(f) {
+      let cx = view.x + view.w/2, cy = view.y + view.h/2;
+      view.w *= f; view.h *= f; view.x = cx - view.w/2; view.y = cy - view.h/2; showView();
+    }
+
+    const getPos = (e) => ({ x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY });
+    const dragStart = (e) => { isDrag = true; start = getPos(e); };
+    const dragMove = (e) => {
+      if (!isDrag) return;
+      let p = getPos(e), factor = view.w / svg.clientWidth;
+      view.x -= (p.x - start.x) * factor; view.y -= (p.y - start.y) * factor; showView(); start = p;
+    };
+
+    svg.addEventListener("mousedown", dragStart); svg.addEventListener("touchstart", (e) => { if(e.touches.length===1) dragStart(e); });
+    window.addEventListener("mousemove", dragMove); window.addEventListener("touchmove", (e) => { if(e.touches.length===1) dragMove(e); });
+    window.addEventListener("mouseup", () => isDrag = false); window.addEventListener("touchend", () => isDrag = false);
+
+    svg.addEventListener("wheel", (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.1 : 0.9); });
+    document.getElementById("zIn").addEventListener("click", () => zoom(0.8));
+    document.getElementById("zOut").addEventListener("click", () => zoom(1.25));
+    document.getElementById("home").addEventListener("click", resetView);
     document.getElementById("renderBtn").addEventListener("click", render);
+    document.getElementById("canvas-container").addEventListener("touchstart", () => tip.style.display = 'none');
     window.onload = render;
   </script>
 </body>
