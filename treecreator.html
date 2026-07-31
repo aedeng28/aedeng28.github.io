@@ -5,12 +5,13 @@
   <title>Base a/b Tree Visualizer</title>
   <style>
     body { font-family: sans-serif; background: #1e1e1e; color: #fff; margin: 20px; }
-    .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
+    .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
     input { width: 60px; padding: 5px; background: #333; color: #fff; border: 1px solid #555; }
     button { padding: 5px 15px; background: #007acc; color: #fff; border: none; cursor: pointer; }
     button:hover { background: #005999; }
-    /* Give the SVG an explicit layout size so clientWidth cannot return 0 */
-    svg { background: #111; border: 1px solid #444; width: 800px; height: 600px; display: block; }
+    /* Locked dimensions prevent 0px layout bugs */
+    #tree-container { width: 900px; height: 600px; background: #111; border: 1px solid #444; overflow: auto; }
+    svg { background: #111; display: block; }
   </style>
 </head>
 <body>
@@ -24,8 +25,10 @@
     <button onclick="renderTree()">Generate Tree</button>
   </div>
 
-  <!-- Set hardcoded dimensions directly on the element as a fallback -->
-  <svg id="tree" width="800" height="600"></svg>
+  <!-- Locked width container guarantees visibility -->
+  <div id="tree-container">
+    <svg id="tree" width="900" height="600"></svg>
+  </div>
 
   <script>
     const svgNS = "http://w3.org";
@@ -35,14 +38,13 @@
       svgCanvas.innerHTML = '';
     }
 
-    // Lines require explicit stroke attributes to show up in SVG
     function createline(x1, y1, x2, y2) {
       const newLine = document.createElementNS(svgNS, "line");
       newLine.setAttribute("x1", x1);
       newLine.setAttribute("y1", y1);
       newLine.setAttribute("x2", x2);
       newLine.setAttribute("y2", y2);
-      newLine.setAttribute("stroke", "#ffffff"); // Pure white line path
+      newLine.setAttribute("stroke", "#ffffff"); 
       newLine.setAttribute("stroke-width", "2");
       svgCanvas.appendChild(newLine);
     }
@@ -54,17 +56,18 @@
       circle.setAttribute("cx", cx);
       circle.setAttribute("cy", cy);
       circle.setAttribute("r", r);
-      circle.setAttribute("fill", "#4fc3f7");    // Blue node fills
-      circle.setAttribute("stroke", "#ffffff");  // White node outlines
+      circle.setAttribute("fill", "#4fc3f7");    
+      circle.setAttribute("stroke", "#ffffff");  
       circle.setAttribute("stroke-width", "1.5");
       g.appendChild(circle);
 
       const text = document.createElementNS(svgNS, "text");
       text.setAttribute("x", cx);
       text.setAttribute("y", cy);
-      text.setAttribute("fill", "#000000");      // Black text so it's readable inside the blue circle
+      text.setAttribute("fill", "#000000");      
       text.setAttribute("font-size", "12");
       text.setAttribute("font-family", "monospace");
+      text.setAttribute("font-weight", "bold");
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("dominant-baseline", "central");
       text.textContent = label;
@@ -75,6 +78,7 @@
 
     function getNextValues(x, a, b) {
       let transitions = [];
+      // In base a/b, we check standard residue paths: bx' = ax - d
       for (let digit = 0; digit < a; digit++) {
         let remainder = (a * x - digit);
         if (remainder % b === 0) {
@@ -97,10 +101,10 @@
           let offset = (index - (numChildren - 1) / 2) * horizontalSpacing;
           childX += offset;
         }
-        let childY = yPos + 80;
+        let childY = yPos + 90; 
 
         createline(xPos, yPos, childX, childY);
-        buildBranch(step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.5);
+        buildBranch(step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.45);
       });
 
       createNode(xPos, yPos, 18, x);
@@ -114,19 +118,16 @@
       const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value);
 
-      // Hard fallback to 400 if clientWidth evaluates to 0
-      const canvasWidth = svgCanvas.clientWidth || 800;
-      const startX = canvasWidth / 2;
+      // Hardcoded coordinate mapping avoids relying on dynamic layout engines
+      const startX = 450; 
       const startY = 50;
-      const initialHorizontalSpread = 200;
+      const initialHorizontalSpread = 280;
 
       buildBranch(rootVal, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
     }
 
-    // Trigger explicit layout rendering
-    window.onload = function() {
-      renderTree();
-    };
+    // Direct initialization bypasses slow layout events
+    renderTree();
   </script>
 </body>
 </html>
