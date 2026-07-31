@@ -2,51 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Base a/b Tree Visualizer</title>
+  <title>Base 3/2 Tree Visualizer</title>
   <style>
-    body { font-family: sans-serif; background: #1a1a1a; color: #ffffff; margin: 20px; }
-    .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-    input { width: 60px; padding: 6px; background: #333; color: #fff; border: 1px solid #666; font-size: 14px; }
-    button { padding: 6px 20px; background: #ff9800; color: #000; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; }
-    button:hover { background: #e68a00; }
-    #canvas-frame { width: 100%; max-width: 900px; background: #000000; border: 3px solid #ff9800; border-radius: 8px; margin-top: 10px; }
-    svg { display: block; margin: 0 auto; background: #000000; }
+    body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
+    .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: #222; padding: 15px; border-radius: 6px; }
+    input, select { width: 100px; padding: 6px; background: #333; color: #fff; border: 1px solid #666; font-size: 14px; border-radius: 4px; }
+    button { padding: 8px 20px; background: #00e5ff; color: #000; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; }
+    button:hover { background: #00b2cc; }
+    #canvas-frame { width: 100%; max-width: 950px; background: #000000; border: 2px solid #333; border-radius: 8px; margin-top: 10px; }
+    svg { display: block; margin: 0 auto; background: #050505; }
+    #debug-log { background: #1e1e1e; color: #ff3366; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 10px; display: none; }
   </style>
 </head>
 <body>
 
-  <h1>Base a/b Tree Visualizer</h1>
-  <p style="color: #bbb;">If the tree doesn't load instantly, click the orange button below.</p>
+  <h1>Base $a/b$ True Tree Visualizer</h1>
   
   <div class="controls">
-    <label>Base a: <input type="number" id="baseA" value="3"></label>
-    <label>Base b: <input type="number" id="baseB" value="2"></label>
+    <label>Algorithm Mode: 
+      <select id="algoMode" onchange="toggleInputs()">
+        <option value="base32" selected>True Base 3/2 Tree</option>
+        <option value="custom">Custom a/b Solver</option>
+      </select>
+    </label>
+    <span id="customParams" style="display:none; gap:15px; align-items:center;">
+      <label>Base a: <input type="number" id="baseA" value="3"></label>
+      <label>Base b: <input type="number" id="baseB" value="2"></label>
+    </span>
     <label>Root Value: <input type="number" id="rootVal" value="2"></label>
-    <label>Max Depth: <input type="number" id="maxDepth" value="4"></label>
-    <button onclick="renderTree()">Draw Tree Manually</button>
+    <label>Max Depth: <input type="number" id="maxDepth" value="5" min="1" max="7"></label>
+    <button onclick="renderTree()">Draw Tree</button>
   </div>
 
+  <div id="debug-log"></div>
+
   <div id="canvas-frame">
-    <!-- Viewbox attributes ensure the coordinates auto-scale perfectly -->
+    <!-- Explicit ViewBox locks down canvas scaling and guarantees visibility -->
     <svg id="tree" viewBox="0 0 1000 700" width="100%" height="600"></svg>
   </div>
 
   <script>
     const svgNS = "http://w3.org";
 
-    function clearCanvas(canvas) {
-      canvas.innerHTML = '';
+    function toggleInputs() {
+      const mode = document.getElementById("algoMode").value;
+      document.getElementById("customParams").style.display = (mode === "custom") ? "inline-flex" : "none";
     }
 
-    function createline(canvas, x1, y1, x2, y2) {
+    function logError(msg) {
+      const log = document.getElementById("debug-log");
+      log.style.display = "block";
+      log.innerHTML += msg + "<br/>";
+    }
+
+    function clearCanvas(canvas) {
+      canvas.innerHTML = '';
+      document.getElementById("debug-log").style.display = "none";
+      document.getElementById("debug-log").innerHTML = "";
+    }
+
+    function createline(canvas, x1, y1, x2, y2, digit) {
+      // Branch connector line
       const newLine = document.createElementNS(svgNS, "line");
       newLine.setAttribute("x1", x1);
       newLine.setAttribute("y1", y1);
       newLine.setAttribute("x2", x2);
       newLine.setAttribute("y2", y2);
-      newLine.setAttribute("stroke", "#ffeb3b"); // Bright Neon Yellow for connection paths
-      newLine.setAttribute("stroke-width", "3");
+      newLine.setAttribute("stroke", "#555555");
+      newLine.setAttribute("stroke-width", "2");
       canvas.appendChild(newLine);
+
+      // Branch text label (shows the remainder/digit choice)
+      const text = document.createElementNS(svgNS, "text");
+      text.setAttribute("x", (x1 + x2) / 2);
+      text.setAttribute("y", (y1 + y2) / 2 - 8);
+      text.setAttribute("fill", "#ff9800");
+      text.setAttribute("font-size", "11");
+      text.setAttribute("font-family", "monospace");
+      text.setAttribute("text-anchor", "middle");
+      text.textContent = `d:${digit}`;
+      canvas.appendChild(text);
     }
 
     function createNode(canvas, cx, cy, r, label) {
@@ -56,16 +91,16 @@
       circle.setAttribute("cx", cx);
       circle.setAttribute("cy", cy);
       circle.setAttribute("r", r);
-      circle.setAttribute("fill", "#00e5ff");    // Bright Cyan node fill
-      circle.setAttribute("stroke", "#ffffff");  // White outline
-      circle.setAttribute("stroke-width", "2");
+      circle.setAttribute("fill", "#00e5ff");    
+      circle.setAttribute("stroke", "#ffffff");  
+      circle.setAttribute("stroke-width", "1.5");
       g.appendChild(circle);
 
       const text = document.createElementNS(svgNS, "text");
       text.setAttribute("x", cx);
       text.setAttribute("y", cy);
-      text.setAttribute("fill", "#000000");      // Crisp black interior text label
-      text.setAttribute("font-size", "14");
+      text.setAttribute("fill", "#000000");      
+      text.setAttribute("font-size", "13");
       text.setAttribute("font-family", "sans-serif");
       text.setAttribute("font-weight", "bold");
       text.setAttribute("text-anchor", "middle");
@@ -76,24 +111,39 @@
       canvas.appendChild(g);
     }
 
-    // Mathematical residue solver for the fractional tree progression steps
-    function getNextValues(x, a, b) {
+    // Mathematical resolution step engine
+    function getNextValues(x, mode, a, b) {
       let transitions = [];
-      for (let digit = 0; digit < a; digit++) {
-        let remainder = (a * x - digit);
-        if (remainder % b === 0) {
-          let nextX = remainder / b;
-          transitions.push({ nextX: nextX, digit: digit });
+      
+      if (mode === "base32") {
+        // True Base 3/2 distribution mapping logic
+        if (x % 2 === 0) {
+          transitions.push({ nextX: (3 * x) / 2, digit: 0 });
+        } else {
+          transitions.push({ nextX: (3 * x - 1) / 2, digit: 1 });
+          transitions.push({ nextX: (3 * x + 1) / 2, digit: 2 });
+        }
+      } else {
+        // Fallback residue search solver 
+        for (let digit = 0; digit < a; digit++) {
+          let remainder = (a * x - digit);
+          if (remainder % b === 0) {
+            transitions.push({ nextX: remainder / b, digit: digit });
+          }
         }
       }
       return transitions;
     }
 
-    function buildBranch(canvas, x, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
+    function buildBranch(canvas, x, mode, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
       if (currentDepth > maxDepth) return;
 
-      let nextSteps = getNextValues(x, a, b);
+      let nextSteps = getNextValues(x, mode, a, b);
       let numChildren = nextSteps.length;
+
+      if (numChildren === 0) {
+        logError(`Node ${x} at Depth ${currentDepth} hit a dead end (no integer branches found).`);
+      }
 
       nextSteps.forEach((step, index) => {
         let childX = xPos;
@@ -101,37 +151,42 @@
           let offset = (index - (numChildren - 1) / 2) * horizontalSpacing;
           childX += offset;
         }
-        let childY = yPos + 110; // Tall spacing prevents overlap compressions
+        let childY = yPos + 90; 
 
-        createline(canvas, xPos, yPos, childX, childY);
-        buildBranch(canvas, step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.45);
+        createline(canvas, xPos, yPos, childX, childY, step.digit);
+        buildBranch(canvas, step.nextX, mode, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.5);
       });
 
-      createNode(canvas, xPos, yPos, 22, x);
+      createNode(canvas, xPos, yPos, 20, x);
     }
 
     function renderTree() {
       const svgCanvas = document.getElementById("tree");
-      if (!svgCanvas) return; // Escape block if DOM layout isn't completely parsed yet
+      if (!svgCanvas) return;
       
       clearCanvas(svgCanvas);
       
+      const mode = document.getElementById("algoMode").value;
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
-      const rootVal = parseInt(document.getElementById("rootVal").value) || 2;
+      const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
 
-      // Coordinate systems mapped perfectly to match our structural viewport (1000x700)
-      const startX = 500; 
-      const startY = 60;
-      const initialHorizontalSpread = 320;
+      if (isNaN(rootVal)) {
+        logError("Please enter a valid number for Root Value.");
+        return;
+      }
 
-      buildBranch(svgCanvas, rootVal, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
+      // Hardcoded center alignment coordinates inside standard 1000x700 ViewBox boundaries
+      const startX = 500; 
+      const startY = 50;
+      const initialHorizontalSpread = 300;
+
+      buildBranch(svgCanvas, rootVal, mode, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
     }
 
-    // Safe Initialization: Delay execution slightly until DOM construction completes cleanly
-    setTimeout(renderTree, 150);
+    // Trigger on load
+    window.onload = renderTree;
   </script>
 </body>
 </html>
-
