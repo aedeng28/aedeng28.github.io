@@ -9,15 +9,13 @@
     input { width: 60px; padding: 5px; background: #333; color: #fff; border: 1px solid #555; }
     button { padding: 5px 15px; background: #007acc; color: #fff; border: none; cursor: pointer; }
     button:hover { background: #005999; }
-    svg { background: #111; border: 1px solid #444; width: 100%; height: 600px; }
-    circle { fill: #4fc3f7; stroke: #fff; stroke-width: 1.5px; }
-    line { stroke: #555; stroke-width: 2px; }
-    text { fill: #fff; font-size: 12px; font-family: monospace; text-anchor: middle; dominant-baseline: central; }
+    /* Give the SVG an explicit layout size so clientWidth cannot return 0 */
+    svg { background: #111; border: 1px solid #444; width: 800px; height: 600px; display: block; }
   </style>
 </head>
 <body>
 
-  <h1>Base $a/b$ Tree Visualizer</h1>
+  <h1>Base a/b Tree Visualizer</h1>
   <div class="controls">
     <label>Base a: <input type="number" id="baseA" value="3"></label>
     <label>Base b: <input type="number" id="baseB" value="2"></label>
@@ -26,29 +24,29 @@
     <button onclick="renderTree()">Generate Tree</button>
   </div>
 
-  <svg id="tree"></svg>
+  <!-- Set hardcoded dimensions directly on the element as a fallback -->
+  <svg id="tree" width="800" height="600"></svg>
 
   <script>
-    // 1. Correct SVG Namespace
     const svgNS = "http://w3.org";
     const svgCanvas = document.getElementById("tree");
 
-    // Helper to clear previous tree
     function clearCanvas() {
       svgCanvas.innerHTML = '';
     }
 
-    // 2. Fixed Line Creation Element Type
+    // Lines require explicit stroke attributes to show up in SVG
     function createline(x1, y1, x2, y2) {
       const newLine = document.createElementNS(svgNS, "line");
       newLine.setAttribute("x1", x1);
       newLine.setAttribute("y1", y1);
       newLine.setAttribute("x2", x2);
       newLine.setAttribute("y2", y2);
+      newLine.setAttribute("stroke", "#ffffff"); // Pure white line path
+      newLine.setAttribute("stroke-width", "2");
       svgCanvas.appendChild(newLine);
     }
 
-    // 3. Circle Creation with Text Label
     function createNode(cx, cy, r, label) {
       const g = document.createElementNS(svgNS, "g");
       
@@ -56,23 +54,27 @@
       circle.setAttribute("cx", cx);
       circle.setAttribute("cy", cy);
       circle.setAttribute("r", r);
+      circle.setAttribute("fill", "#4fc3f7");    // Blue node fills
+      circle.setAttribute("stroke", "#ffffff");  // White node outlines
+      circle.setAttribute("stroke-width", "1.5");
       g.appendChild(circle);
 
       const text = document.createElementNS(svgNS, "text");
       text.setAttribute("x", cx);
       text.setAttribute("y", cy);
+      text.setAttribute("fill", "#000000");      // Black text so it's readable inside the blue circle
+      text.setAttribute("font-size", "12");
+      text.setAttribute("font-family", "monospace");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "central");
       text.textContent = label;
       g.appendChild(text);
 
       svgCanvas.appendChild(g);
     }
 
-    // 4. Base a/b Tree Transition Math
-    // Determines the available valid digit/remainder transitions
     function getNextValues(x, a, b) {
       let transitions = [];
-      // In base a/b, the standard transition steps solve: bx' = ax - d
-      // Where d is a valid digit choice. For base 3/2, digits are typically {0, 1, 2}
       for (let digit = 0; digit < a; digit++) {
         let remainder = (a * x - digit);
         if (remainder % b === 0) {
@@ -83,7 +85,6 @@
       return transitions;
     }
 
-    // 5. Core Recursive Branching Function
     function buildBranch(x, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
       if (currentDepth > maxDepth) return;
 
@@ -91,26 +92,20 @@
       let numChildren = nextSteps.length;
 
       nextSteps.forEach((step, index) => {
-        // Calculate spread for children to prevent overlaps
         let childX = xPos;
         if (numChildren > 1) {
           let offset = (index - (numChildren - 1) / 2) * horizontalSpacing;
           childX += offset;
         }
-        let childY = yPos + 80; // Distance down per level
+        let childY = yPos + 80;
 
-        // Draw connection line
         createline(xPos, yPos, childX, childY);
-
-        // Recurse deeper down the tree branch
         buildBranch(step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.5);
       });
 
-      // Draw node circle on top of lines so it renders beautifully
       createNode(xPos, yPos, 18, x);
     }
 
-    // Main controller to pull DOM values and trigger initialization
     function renderTree() {
       clearCanvas();
       
@@ -119,16 +114,19 @@
       const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value);
 
-      // Center the root dynamically to the current SVG layout window size
-      const startX = svgCanvas.clientWidth / 2 || 400;
-      const startY = 40;
-      const initialHorizontalSpread = 160;
+      // Hard fallback to 400 if clientWidth evaluates to 0
+      const canvasWidth = svgCanvas.clientWidth || 800;
+      const startX = canvasWidth / 2;
+      const startY = 50;
+      const initialHorizontalSpread = 200;
 
       buildBranch(rootVal, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
     }
 
-    // Run initial generation on load
-    window.onload = renderTree;
+    // Trigger explicit layout rendering
+    window.onload = function() {
+      renderTree();
+    };
   </script>
 </body>
 </html>
