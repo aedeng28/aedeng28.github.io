@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>True Positional Base a/b Tree Visualizer</title>
+  <title>Base a/b Canonical Representation Tree</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -15,14 +15,14 @@
     circle { fill: #000000; stroke: #00ff00; stroke-width: 2; cursor: pointer; }
     circle:hover { fill: #003300; }
     text { fill: #00ff00; font-size: 13px; text-anchor: middle; dominant-baseline: central; font-weight: bold; pointer-events: none; }
-    .digit-label { fill: #ffaa00; font-size: 11px; }
+    .digit-label { fill: #ffaa00; font-size: 12px; font-weight: bold; }
     #info-panel { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.5; }
-    #tooltip { background: #111; color: #ffaa00; padding: 8px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 12px; }
+    #tooltip { background: #111; color: #00ff00; padding: 10px; border: 1px solid #00ff00; border-radius: 4px; position: absolute; display: none; font-size: 13px; font-family: monospace; box-shadow: 0px 0px 10px #00ff00; }
   </style>
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: TRUE BASE a/b REPRESENTATION TREE</h1>
+  <h1>[SYS_STATUS]: CANONICAL REPRESENTATION TREE (BASE a/b)</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -34,33 +34,29 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
-      <label>Root Integer (x):</label>
-      <input type="number" id="rootVal" value="2">
-    </div>
-    <div class="param-group">
       <label>Max Layers:</label>
       <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">RENDER CORRECTED TREE</button>
+    <button id="renderBtn">GENERATE PATH REPRESENTATIONS</button>
   </div>
 
   <div id="tooltip"></div>
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * <strong>Verification Math:</strong> Hover over any child node to view its exact positional transition formula: <code>x_child = (a * x_parent + d) / b</code>
+    * <strong>The Expansion Rule:</strong> Hover over any integer node. The popup will display the exact path of branch digits taken to reach it. Just add a <strong>"0"</strong> to the end of that string to form its accurate base a/b representation!
   </div>
 
   <script>
-    // Pure canonical forward state transition algorithm
-    function calculateCorrectChildren(x, a, b) {
+    // Pure Akiyama-Frougny forward transition engine
+    function calculateRepresentationChildren(x, a, b) {
       let validBranches = [];
-      // The digit set for a/b fractional systems must be digits d < a
+      // Valid alphabet digits for fractional base a/b range from 0 to a-1
       for (let d = 0; d < a; d++) {
-        let testNumerator = (a * x) + d;
-        if (testNumerator % b === 0) {
-          let nextStateValue = testNumerator / b;
-          validBranches.push({ value: nextStateValue, digit: d });
+        let total = (a * x) + d;
+        if (total % b === 0) {
+          let childValue = total / b;
+          validBranches.push({ value: childValue, digit: d });
         }
       }
       return validBranches;
@@ -69,17 +65,23 @@
     function buildTreeData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
-      const rootVal = parseInt(document.getElementById("rootVal").value);
       const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
-
-      if (isNaN(rootVal)) return null;
 
       let nodes = [];
       let edges = [];
       let globalIdCounter = 0;
 
-      // Queue manages geometric spread bounds to cleanly avoid overlapping branches
-      let queue = [{ id: globalIdCounter++, val: rootVal, parentVal: null, formulaDigit: null, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
+      // The canonical base a/b representation tree always originates from root 0
+      let queue = [{ 
+        id: globalIdCounter++, 
+        val: 0, 
+        pathString: "", 
+        depth: 0, 
+        x: 500, 
+        y: 50, 
+        xMin: 0, 
+        xMax: 1000 
+      }];
 
       while (queue.length > 0) {
         let current = queue.shift();
@@ -87,7 +89,7 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateCorrectChildren(current.val, a, b);
+        let children = calculateRepresentationChildren(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
@@ -99,11 +101,13 @@
           let childX = childXMin + (segmentWidth / 2);
           let childY = 50 + ((current.depth + 1) * 110);
 
+          // Update the path representation tracker string
+          let updatedPath = current.pathString === "" ? `${child.digit}` : `${current.pathString}${child.digit}`;
+
           let childNode = {
             id: globalIdCounter++,
             val: child.value,
-            parentVal: current.val,
-            formulaDigit: child.digit,
+            pathString: updatedPath,
             depth: current.depth + 1,
             x: childX,
             y: childY,
@@ -133,12 +137,9 @@
       const data = buildTreeData();
       if (!data) return;
 
-      const a = document.getElementById("baseA").value;
-      const b = document.getElementById("baseB").value;
-
       let structuralMarkup = "";
 
-      // Step 1: Draw connection lines
+      // Step 1: Draw connection line segments
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
@@ -146,16 +147,20 @@
           structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
           let mx = (pNode.x + cNode.x) / 2;
           let my = (pNode.y + cNode.y) / 2 - 10;
-          structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">d:${edge.digit}</text>`;
+          structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">${edge.digit}</text>`;
         }
       });
 
-      // Step 2: Draw nodes with true computed integers
+      // Step 2: Draw nodes loaded with precise matching sequential integers
       data.nodes.forEach(node => {
-        // Construct clear interactive string attributes to verify math live on screen
-        let tooltipText = node.parentVal !== null 
-          ? `Math: (${a} * ${node.parentVal} + ${node.formulaDigit}) / ${b} = ${node.val}`
-          : `Root Node Start Vector: ${node.val}`;
+        let cleanPath = node.pathString === "" ? "[Root]" : node.pathString;
+        let finalRepresentation = node.pathString === "" ? "0" : `${node.pathString}0`;
+
+        let tooltipText = `
+          <strong>Value:</strong> ${node.val}<br>
+          <strong>Path Taken:</strong> ${cleanPath}<br>
+          <strong>Base Expansion (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
+        `;
 
         structuralMarkup += `
           <g class="node-group" data-tip="${tooltipText}">
@@ -167,7 +172,7 @@
 
       canvas.innerHTML = structuralMarkup;
 
-      // Step 3: Attach crisp mouse events for live math trace updates
+      // Step 3: Wire high-contrast tooltip events for representation tracing
       document.querySelectorAll('.node-group').forEach(item => {
         item.addEventListener('mousemove', function(e) {
           tooltip.style.display = 'block';
