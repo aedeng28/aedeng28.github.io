@@ -20,7 +20,7 @@
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: ACCURATE BASE a/b TREE GENERATOR</h1>
+  <h1>[SYS_STATUS]: RATIONAL BASE a/b BRANCHING TREE</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -33,31 +33,31 @@
     </div>
     <div class="param-group">
       <label>Root Value (x):</label>
-      <input type="number" id="rootVal" value="4">
+      <input type="number" id="rootVal" value="2">
     </div>
     <div class="param-group">
       <label>Max Layers:</label>
-      <input type="number" id="maxDepth" value="4" min="1" max="6">
+      <input type="number" id="maxDepth" value="5" min="1" max="7">
     </div>
-    <button id="renderBtn">COMPUTE FORWARD TREE</button>
+    <button id="renderBtn">GENERATE BRANCHING TREE</button>
   </div>
 
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * Node values step forward according to positional representation base systems: x_child = (b * x_parent + d) / a
+    * Tree branches accurately based on the forward fractional sequence: x_child = (a * x_parent - d) / b
   </div>
 
   <script>
-    // Validates matching forward transition steps
-    function calculateForwardChildren(x, a, b) {
+    // Evaluates the genuine forward rational branching steps
+    function calculateChildren(x, a, b) {
       let validBranches = [];
-      // Digit rules specify values matching 0 up to a - 1
+      // Digit set ranges from 0 to a-1
       for (let d = 0; d < a; d++) {
-        let total = (b * x) + d;
-        if (total % a === 0) {
-          let nextValue = total / a;
-          validBranches.push({ value: nextValue, digit: d });
+        let remainder = (a * x) - d;
+        if (remainder % b === 0) {
+          let childValue = remainder / b;
+          validBranches.push({ value: childValue, digit: d });
         }
       }
       return validBranches;
@@ -67,7 +67,7 @@
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
       const rootVal = parseInt(document.getElementById("rootVal").value);
-      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
+      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 5;
 
       if (isNaN(rootVal)) return null;
 
@@ -75,6 +75,7 @@
       let edges = [];
       let globalIdCounter = 0;
 
+      // Queue manages positioning using an explicit horizontal layout width boundary constraint
       let queue = [{ id: globalIdCounter++, val: rootVal, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
 
       while (queue.length > 0) {
@@ -83,17 +84,18 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateForwardChildren(current.val, a, b);
+        let children = calculateChildren(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
+        // Space allocation slices the parent's horizontal window region evenly
         let segmentWidth = (current.xMax - current.xMin) / nChildren;
 
         children.forEach((child, index) => {
           let childXMin = current.xMin + (index * segmentWidth);
           let childXMax = childXMin + segmentWidth;
           let childX = childXMin + (segmentWidth / 2);
-          let childY = 50 + ((current.depth + 1) * 110);
+          let childY = 50 + ((current.depth + 1) * 100); // Level vertical descent height
 
           let childNode = {
             id: globalIdCounter++,
@@ -128,19 +130,20 @@
 
       let structuralMarkup = "";
 
-      // Render connectors
+      // Step 1: Draw clean layout branch connectors
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
         if (pNode && cNode) {
           structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
+          
           let mx = (pNode.x + cNode.x) / 2;
           let my = (pNode.y + cNode.y) / 2 - 10;
           structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">d:${edge.digit}</text>`;
         }
       });
 
-      // Render nodes with correct computed values
+      // Step 2: Draw individual vector nodes on top
       data.nodes.forEach(node => {
         structuralMarkup += `
           <g>
@@ -158,3 +161,4 @@
   </script>
 </body>
 </html>
+
