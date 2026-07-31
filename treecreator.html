@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en-PH">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Custom a/b Rational Base Tree Visualizer</title>
+  <title>Accurate Positional Base a/b Tree Visualizer</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -20,7 +20,7 @@
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: RATIONAL BASE a/b TREE GENERATOR</h1>
+  <h1>[SYS_STATUS]: ACCURATE BASE a/b TREE GENERATOR</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -32,34 +32,32 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
-      <label>Root Value:</label>
-      <input type="number" id="rootVal" value="2">
+      <label>Root Value (x):</label>
+      <input type="number" id="rootVal" value="4">
     </div>
     <div class="param-group">
-      <label>Max Depth Layers:</label>
+      <label>Max Layers:</label>
       <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">COMPUTE & RENDER</button>
+    <button id="renderBtn">COMPUTE FORWARD TREE</button>
   </div>
 
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * Generates valid child nodes matching the constraint: x' = (a*x - d)/b where integer digit d &lt; a.
+    * Node values step forward according to positional representation base systems: x_child = (b * x_parent + d) / a
   </div>
 
   <script>
-    const svgNS = "http://w3.org";
-
-    // Mathematical resolution step engine for any a/b rational base
-    function calculateChildren(x, a, b) {
+    // Validates matching forward transition steps
+    function calculateForwardChildren(x, a, b) {
       let validBranches = [];
-      // Standard digit set for base a/b representation ranges from 0 to a-1
+      // Digit rules specify values matching 0 up to a - 1
       for (let d = 0; d < a; d++) {
-        let remainder = (a * x) - d;
-        if (remainder % b === 0) {
-          let childValue = remainder / b;
-          validBranches.push({ value: childValue, digit: d });
+        let total = (b * x) + d;
+        if (total % a === 0) {
+          let nextValue = total / a;
+          validBranches.push({ value: nextValue, digit: d });
         }
       }
       return validBranches;
@@ -77,8 +75,6 @@
       let edges = [];
       let globalIdCounter = 0;
 
-      // Initialize queue for breadth-first construction layout tracking
-      // Viewport width context fixed at 1000 coordinates
       let queue = [{ id: globalIdCounter++, val: rootVal, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
 
       while (queue.length > 0) {
@@ -87,18 +83,17 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateChildren(current.val, a, b);
+        let children = calculateForwardChildren(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
-        // Dynamic segment scaling divides parent's horizontal field boundary context cleanly
         let segmentWidth = (current.xMax - current.xMin) / nChildren;
 
         children.forEach((child, index) => {
           let childXMin = current.xMin + (index * segmentWidth);
           let childXMax = childXMin + segmentWidth;
           let childX = childXMin + (segmentWidth / 2);
-          let childY = 50 + ((current.depth + 1) * 110); // Spacing layout deep shift
+          let childY = 50 + ((current.depth + 1) * 110);
 
           let childNode = {
             id: globalIdCounter++,
@@ -133,21 +128,19 @@
 
       let structuralMarkup = "";
 
-      // Step 1: Render Connection Paths & Digit Choices
+      // Render connectors
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
         if (pNode && cNode) {
           structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
-          
-          // Center coordinate positioning for branch remainder strings
           let mx = (pNode.x + cNode.x) / 2;
           let my = (pNode.y + cNode.y) / 2 - 10;
           structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">d:${edge.digit}</text>`;
         }
       });
 
-      // Step 2: Render Nodes
+      // Render nodes with correct computed values
       data.nodes.forEach(node => {
         structuralMarkup += `
           <g>
