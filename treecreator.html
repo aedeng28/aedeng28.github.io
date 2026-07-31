@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Complete Base a/b Representation Tree</title>
+  <title>Complete Base a/b Tree Visualizer</title>
   <style>
     body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; margin: 0; }
     .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
@@ -22,7 +22,7 @@
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: COMPLETE BASE a/b TREE (ALL MULTIPLES OF a)</h1>
+  <h1>[SYS_STATUS]: BASE a/b TREE (ALL MULTIPLES OF a)</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -37,33 +37,32 @@
       <label>Max Layers:</label>
       <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">GENERATE FULL MULTIPLES TREE</button>
+    <button id="renderBtn">GENERATE TREE</button>
   </div>
 
   <div id="tooltip"></div>
   <svg id="svg-layer" viewBox="0 0 1200 650"></svg>
   
   <div id="info-panel">
-    * <strong>Full Structural Branching:</strong> Every node generated here is an independent integer multiple of <strong>a</strong>.<br>
-    * <strong>The Expansion:</strong> Hover over any node to view its generated path string. Add a trailing <strong>"0"</strong> to get its complete base a/b representation string!
+    * <strong>The Tree Architecture:</strong> Generates all consecutive integer multiples of <strong>a</strong> sequentially. <br>
+    * <strong>Verification:</strong> Hover over any node. Read its path string and append a <strong>"0"</strong> to form its exact base a/b representation string.
   </div>
 
   <script>
-    // Universal Akiyama-Frougny branch engine mapping ALL valid multiples of a
-    function getAllMultiplesBranches(x, a, b) {
+    // Universal branch evaluator that handles the root and generates all multiples of a
+    function getFullMultiplesBranches(x, a, b) {
       let validBranches = [];
-      // Iterates across the complete digit alphabet [0, a-1]
+      
+      // Iterate through the digit alphabet options [0, a-1]
       for (let d = 0; d < a; d++) {
-        // Prevent infinite self-loops on root zero
+        // To break the root 0 -> 0 infinite loop trap, we skip the d=0 option on the root node
         if (x === 0 && d === 0) continue;
 
-        let testVal = (a * x) + d;
+        // Formula ensures children scale outward as legal multiples of a
+        let testVal = (a * x) + (d * a);
         if (testVal % b === 0) {
-          let nextState = testVal / b;
-          // Ensure the target is a valid integer AND a perfect multiple of 'a'
-          if (nextState % a === 0) {
-            validBranches.push({ value: nextState, digit: d });
-          }
+          let childState = testVal / b;
+          validBranches.push({ value: childState, digit: d });
         }
       }
       return validBranches;
@@ -78,7 +77,7 @@
       let edges = [];
       let globalIdCounter = 0;
 
-      // Root element is universally locked to 0
+      // Tree begins cleanly from base-0 root foundation
       let queue = [{ 
         id: globalIdCounter++, 
         val: 0, 
@@ -96,12 +95,11 @@
 
         if (current.depth >= maxDepth) continue;
 
-        // Computes ALL available valid children simultaneously to force wide structural fanning
-        let children = getAllMultiplesBranches(current.val, a, b);
+        let children = getFullMultiplesBranches(current.val, a, b);
         let nChildren = children.length;
         if (nChildren === 0) continue;
 
-        // Distributes the current node's screen real estate evenly across all children
+        // Slices horizontal screen parameters evenly among siblings
         let segmentWidth = (current.xMax - current.xMin) / nChildren;
 
         children.forEach((child, index) => {
@@ -147,7 +145,7 @@
 
       let structuralMarkup = "";
 
-      // Step 1: Draw lines for all parallel branches
+      // Step 1: Render branch links
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
@@ -159,14 +157,14 @@
         }
       });
 
-      // Step 2: Draw node labels over the branch intersections
+      // Step 2: Render nodes
       data.nodes.forEach(node => {
         let cleanPath = node.pathString === "" ? "[Root]" : node.pathString;
         let finalRepresentation = node.pathString === "" ? "0" : `${node.pathString}0`;
 
         let tooltipText = `
           <strong>Value:</strong> ${node.val}<br>
-          <strong>Path Taken:</strong> ${cleanPath}<br>
+          <strong>Path:</strong> ${cleanPath}<br>
           <strong>Base Expansion (+0):</strong> <span style='color:#ffaa00'>${finalRepresentation}</span>
         `;
 
@@ -180,7 +178,7 @@
 
       canvas.innerHTML = structuralMarkup;
 
-      // Step 3: Enable the hover tooltip tracking system
+      // Step 3: Map interactive popup hover systems
       document.querySelectorAll('.node-group').forEach(item => {
         item.addEventListener('mousemove', function(e) {
           tooltip.style.display = 'block';
