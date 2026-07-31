@@ -4,81 +4,81 @@
   <meta charset="UTF-8">
   <title>Base a/b Tree Visualizer</title>
   <style>
-    body { font-family: sans-serif; background: #1e1e1e; color: #fff; margin: 20px; }
+    body { font-family: sans-serif; background: #1a1a1a; color: #ffffff; margin: 20px; }
     .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-    input { width: 60px; padding: 5px; background: #333; color: #fff; border: 1px solid #555; }
-    button { padding: 5px 15px; background: #007acc; color: #fff; border: none; cursor: pointer; }
-    button:hover { background: #005999; }
-    /* Locked dimensions prevent 0px layout bugs */
-    #tree-container { width: 900px; height: 600px; background: #111; border: 1px solid #444; overflow: auto; }
-    svg { background: #111; display: block; }
+    input { width: 60px; padding: 6px; background: #333; color: #fff; border: 1px solid #666; font-size: 14px; }
+    button { padding: 6px 20px; background: #ff9800; color: #000; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; }
+    button:hover { background: #e68a00; }
+    #canvas-frame { width: 100%; max-width: 900px; background: #000000; border: 3px solid #ff9800; border-radius: 8px; margin-top: 10px; }
+    svg { display: block; margin: 0 auto; background: #000000; }
   </style>
 </head>
 <body>
 
   <h1>Base a/b Tree Visualizer</h1>
+  <p style="color: #bbb;">If the tree doesn't load instantly, click the orange button below.</p>
+  
   <div class="controls">
     <label>Base a: <input type="number" id="baseA" value="3"></label>
     <label>Base b: <input type="number" id="baseB" value="2"></label>
     <label>Root Value: <input type="number" id="rootVal" value="2"></label>
-    <label>Max Depth: <input type="number" id="maxDepth" value="4" max="6"></label>
-    <button onclick="renderTree()">Generate Tree</button>
+    <label>Max Depth: <input type="number" id="maxDepth" value="4"></label>
+    <button onclick="renderTree()">Draw Tree Manually</button>
   </div>
 
-  <!-- Locked width container guarantees visibility -->
-  <div id="tree-container">
-    <svg id="tree" width="900" height="600"></svg>
+  <div id="canvas-frame">
+    <!-- Viewbox attributes ensure the coordinates auto-scale perfectly -->
+    <svg id="tree" viewBox="0 0 1000 700" width="100%" height="600"></svg>
   </div>
 
   <script>
     const svgNS = "http://w3.org";
-    const svgCanvas = document.getElementById("tree");
 
-    function clearCanvas() {
-      svgCanvas.innerHTML = '';
+    function clearCanvas(canvas) {
+      canvas.innerHTML = '';
     }
 
-    function createline(x1, y1, x2, y2) {
+    function createline(canvas, x1, y1, x2, y2) {
       const newLine = document.createElementNS(svgNS, "line");
       newLine.setAttribute("x1", x1);
       newLine.setAttribute("y1", y1);
       newLine.setAttribute("x2", x2);
       newLine.setAttribute("y2", y2);
-      newLine.setAttribute("stroke", "#ffffff"); 
-      newLine.setAttribute("stroke-width", "2");
-      svgCanvas.appendChild(newLine);
+      newLine.setAttribute("stroke", "#ffeb3b"); // Bright Neon Yellow for connection paths
+      newLine.setAttribute("stroke-width", "3");
+      canvas.appendChild(newLine);
     }
 
-    function createNode(cx, cy, r, label) {
+    function createNode(canvas, cx, cy, r, label) {
       const g = document.createElementNS(svgNS, "g");
       
       const circle = document.createElementNS(svgNS, "circle");
       circle.setAttribute("cx", cx);
       circle.setAttribute("cy", cy);
       circle.setAttribute("r", r);
-      circle.setAttribute("fill", "#4fc3f7");    
-      circle.setAttribute("stroke", "#ffffff");  
-      circle.setAttribute("stroke-width", "1.5");
+      circle.setAttribute("fill", "#00e5ff");    // Bright Cyan node fill
+      circle.setAttribute("stroke", "#ffffff");  // White outline
+      circle.setAttribute("stroke-width", "2");
       g.appendChild(circle);
 
       const text = document.createElementNS(svgNS, "text");
       text.setAttribute("x", cx);
       text.setAttribute("y", cy);
-      text.setAttribute("fill", "#000000");      
-      text.setAttribute("font-size", "12");
-      text.setAttribute("font-family", "monospace");
+      text.setAttribute("fill", "#000000");      // Crisp black interior text label
+      text.setAttribute("font-size", "14");
+      text.setAttribute("font-family", "sans-serif");
       text.setAttribute("font-weight", "bold");
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("dominant-baseline", "central");
       text.textContent = label;
       g.appendChild(text);
 
-      svgCanvas.appendChild(g);
+      canvas.appendChild(g);
     }
 
+    // Mathematical residue solver for the fractional tree progression steps
     function getNextValues(x, a, b) {
       let transitions = [];
-      // In base a/b, we check standard residue paths: bx' = ax - d
       for (let digit = 0; digit < a; digit++) {
         let remainder = (a * x - digit);
         if (remainder % b === 0) {
@@ -89,7 +89,7 @@
       return transitions;
     }
 
-    function buildBranch(x, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
+    function buildBranch(canvas, x, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
       if (currentDepth > maxDepth) return;
 
       let nextSteps = getNextValues(x, a, b);
@@ -101,33 +101,37 @@
           let offset = (index - (numChildren - 1) / 2) * horizontalSpacing;
           childX += offset;
         }
-        let childY = yPos + 90; 
+        let childY = yPos + 110; // Tall spacing prevents overlap compressions
 
-        createline(xPos, yPos, childX, childY);
-        buildBranch(step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.45);
+        createline(canvas, xPos, yPos, childX, childY);
+        buildBranch(canvas, step.nextX, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.45);
       });
 
-      createNode(xPos, yPos, 18, x);
+      createNode(canvas, xPos, yPos, 22, x);
     }
 
     function renderTree() {
-      clearCanvas();
+      const svgCanvas = document.getElementById("tree");
+      if (!svgCanvas) return; // Escape block if DOM layout isn't completely parsed yet
       
-      const a = parseInt(document.getElementById("baseA").value);
-      const b = parseInt(document.getElementById("baseB").value);
-      const rootVal = parseInt(document.getElementById("rootVal").value);
-      const maxDepth = parseInt(document.getElementById("maxDepth").value);
+      clearCanvas(svgCanvas);
+      
+      const a = parseInt(document.getElementById("baseA").value) || 3;
+      const b = parseInt(document.getElementById("baseB").value) || 2;
+      const rootVal = parseInt(document.getElementById("rootVal").value) || 2;
+      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
 
-      // Hardcoded coordinate mapping avoids relying on dynamic layout engines
-      const startX = 450; 
-      const startY = 50;
-      const initialHorizontalSpread = 280;
+      // Coordinate systems mapped perfectly to match our structural viewport (1000x700)
+      const startX = 500; 
+      const startY = 60;
+      const initialHorizontalSpread = 320;
 
-      buildBranch(rootVal, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
+      buildBranch(svgCanvas, rootVal, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
     }
 
-    // Direct initialization bypasses slow layout events
-    renderTree();
+    // Safe Initialization: Delay execution slightly until DOM construction completes cleanly
+    setTimeout(renderTree, 150);
   </script>
 </body>
 </html>
+
