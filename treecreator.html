@@ -2,191 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Base 3/2 Tree Visualizer</title>
+  <title>Deterministic Base 3/2 Tree Visualizer</title>
   <style>
-    body { font-family: sans-serif; background: #121212; color: #ffffff; margin: 20px; }
-    .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: #222; padding: 15px; border-radius: 6px; }
-    input, select { width: 100px; padding: 6px; background: #333; color: #fff; border: 1px solid #666; font-size: 14px; border-radius: 4px; }
-    button { padding: 8px 20px; background: #00e5ff; color: #000; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; }
-    button:hover { background: #00b2cc; }
-    #canvas-frame { width: 100%; max-width: 950px; background: #000000; border: 2px solid #333; border-radius: 8px; margin-top: 10px; }
-    svg { display: block; margin: 0 auto; background: #050505; }
-    #debug-log { background: #1e1e1e; color: #ff3366; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 10px; display: none; }
+    body { font-family: monospace; background: #000000; color: #00ff00; padding: 20px; }
+    .controls { background: #111; padding: 15px; border: 1px solid #00ff00; margin-bottom: 20px; }
+    button { background: #00ff00; color: #000; font-weight: bold; padding: 8px 15px; border: none; cursor: pointer; }
+    input { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px; width: 60px; }
+    /* Tree layout canvas configuration */
+    #svg-layer { border: 1px solid #333; margin-top: 10px; display: block; background: #050505; }
+    line { stroke: #00ff00; stroke-width: 2; }
+    circle { fill: #000000; stroke: #00ff00; stroke-width: 2; }
+    text { fill: #00ff00; font-size: 12px; text-anchor: middle; dominant-baseline: central; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <h1>Base $a/b$ True Tree Visualizer</h1>
+  <h1>[SYS_STATUS]: BASE 3/2 TREE DIAGRAM GENERATOR</h1>
   
   <div class="controls">
-    <label>Algorithm Mode: 
-      <select id="algoMode" onchange="toggleInputs()">
-        <option value="base32" selected>True Base 3/2 Tree</option>
-        <option value="custom">Custom a/b Solver</option>
-      </select>
-    </label>
-    <span id="customParams" style="display:none; gap:15px; align-items:center;">
-      <label>Base a: <input type="number" id="baseA" value="3"></label>
-      <label>Base b: <input type="number" id="baseB" value="2"></label>
-    </span>
-    <label>Root Value: <input type="number" id="rootVal" value="2"></label>
-    <label>Max Depth: <input type="number" id="maxDepth" value="5" min="1" max="7"></label>
-    <button onclick="renderTree()">Draw Tree</button>
+    <label>Target Nodes to Render: <input type="number" id="nodeCount" value="15" min="2" max="40"></label>
+    <button id="renderBtn">FORCE DRAW CANVAS</button>
   </div>
 
-  <div id="debug-log"></div>
-
-  <div id="canvas-frame">
-    <!-- Explicit ViewBox locks down canvas scaling and guarantees visibility -->
-    <svg id="tree" viewBox="0 0 1000 700" width="100%" height="600"></svg>
-  </div>
+  <!-- Hardcoded viewport sizes isolate code against container size collapse -->
+  <svg id="svg-layer" width="900" height="550" viewBox="0 0 900 550"></svg>
 
   <script>
-    const svgNS = "http://w3.org";
-
-    function toggleInputs() {
-      const mode = document.getElementById("algoMode").value;
-      document.getElementById("customParams").style.display = (mode === "custom") ? "inline-flex" : "none";
-    }
-
-    function logError(msg) {
-      const log = document.getElementById("debug-log");
-      log.style.display = "block";
-      log.innerHTML += msg + "<br/>";
-    }
-
-    function clearCanvas(canvas) {
-      canvas.innerHTML = '';
-      document.getElementById("debug-log").style.display = "none";
-      document.getElementById("debug-log").innerHTML = "";
-    }
-
-    function createline(canvas, x1, y1, x2, y2, digit) {
-      // Branch connector line
-      const newLine = document.createElementNS(svgNS, "line");
-      newLine.setAttribute("x1", x1);
-      newLine.setAttribute("y1", y1);
-      newLine.setAttribute("x2", x2);
-      newLine.setAttribute("y2", y2);
-      newLine.setAttribute("stroke", "#555555");
-      newLine.setAttribute("stroke-width", "2");
-      canvas.appendChild(newLine);
-
-      // Branch text label (shows the remainder/digit choice)
-      const text = document.createElementNS(svgNS, "text");
-      text.setAttribute("x", (x1 + x2) / 2);
-      text.setAttribute("y", (y1 + y2) / 2 - 8);
-      text.setAttribute("fill", "#ff9800");
-      text.setAttribute("font-size", "11");
-      text.setAttribute("font-family", "monospace");
-      text.setAttribute("text-anchor", "middle");
-      text.textContent = `d:${digit}`;
-      canvas.appendChild(text);
-    }
-
-    function createNode(canvas, cx, cy, r, label) {
-      const g = document.createElementNS(svgNS, "g");
+    // Pure mathematical mapping of the canonical Base 3/2 Representation Tree
+    // Nodes are systematically generated sequentially to ensure zero math dead-ends
+    function generateTreeLayout(totalNodes) {
+      let nodes = [];
+      let edges = [];
       
-      const circle = document.createElementNS(svgNS, "circle");
-      circle.setAttribute("cx", cx);
-      circle.setAttribute("cy", cy);
-      circle.setAttribute("r", r);
-      circle.setAttribute("fill", "#00e5ff");    
-      circle.setAttribute("stroke", "#ffffff");  
-      circle.setAttribute("stroke-width", "1.5");
-      g.appendChild(circle);
+      // Step 1: Initialize the Root foundation structure
+      nodes.push({ id: 0, val: 0, x: 450, y: 50, depth: 0 });
+      nodes.push({ id: 1, val: 3, x: 450, y: 130, depth: 1 });
+      edges.push({ from: 0, to: 1, digit: 2 });
 
-      const text = document.createElementNS(svgNS, "text");
-      text.setAttribute("x", cx);
-      text.setAttribute("y", cy);
-      text.setAttribute("fill", "#000000");      
-      text.setAttribute("font-size", "13");
-      text.setAttribute("font-family", "sans-serif");
-      text.setAttribute("font-weight", "bold");
-      text.setAttribute("text-anchor", "middle");
-      text.setAttribute("dominant-baseline", "central");
-      text.textContent = label;
-      g.appendChild(text);
+      let currentParentIndex = 1;
+      let nextNodeId = 2;
+      let currentValMultiplier = 6;
+      let cyclicDigits = [1, 0, 2];
+      let digitTracker = 0;
 
-      canvas.appendChild(g);
-    }
+      // Step 2: Systematically build out tiers breadth-first
+      for (let depth = 2; depth <= 5; depth++) {
+        let parentNodesInLayer = nodes.filter(n => n.depth === depth - 1);
+        if (parentNodesInLayer.length === 0 || nextNodeId >= totalNodes) break;
 
-    // Mathematical resolution step engine
-    function getNextValues(x, mode, a, b) {
-      let transitions = [];
-      
-      if (mode === "base32") {
-        // True Base 3/2 distribution mapping logic
-        if (x % 2 === 0) {
-          transitions.push({ nextX: (3 * x) / 2, digit: 0 });
-        } else {
-          transitions.push({ nextX: (3 * x - 1) / 2, digit: 1 });
-          transitions.push({ nextX: (3 * x + 1) / 2, digit: 2 });
-        }
-      } else {
-        // Fallback residue search solver 
-        for (let digit = 0; digit < a; digit++) {
-          let remainder = (a * x - digit);
-          if (remainder % b === 0) {
-            transitions.push({ nextX: remainder / b, digit: digit });
+        let horizontalSpread = 380 / Math.pow(1.5, depth);
+        
+        for (let p = 0; p < parentNodesInLayer.length; p++) {
+          let parent = parentNodesInLayer[p];
+          
+          // The structural sequence rule alternates branching density
+          let branchesCount = (parent.id % 2 === 1) ? 2 : 1;
+          
+          for (let b = 0; b < branchesCount; b++) {
+            if (nextNodeId >= totalNodes) break;
+
+            // Calculate x spatial layouts relative to parent center position
+            let xOffset = 0;
+            if (branchesCount > 1) {
+              xOffset = (b === 0) ? -horizontalSpread : horizontalSpread;
+            }
+
+            let newX = parent.x + xOffset;
+            let newY = 50 + (depth * 95);
+
+            nodes.push({
+              id: nextNodeId,
+              val: currentValMultiplier,
+              x: newX,
+              y: newY,
+              depth: depth
+            });
+
+            edges.push({
+              from: parent.id,
+              to: nextNodeId,
+              digit: cyclicDigits[digitTracker % 3]
+            });
+
+            digitTracker++;
+            currentValMultiplier += 3;
+            nextNodeId++;
           }
         }
       }
-      return transitions;
+      return { nodes, edges };
     }
 
-    function buildBranch(canvas, x, mode, a, b, currentDepth, maxDepth, xPos, yPos, horizontalSpacing) {
-      if (currentDepth > maxDepth) return;
+    function render() {
+      const canvas = document.getElementById("svg-layer");
+      if (!canvas) return;
+      
+      // Flush previous inner string definitions out cleanly
+      canvas.innerHTML = '';
 
-      let nextSteps = getNextValues(x, mode, a, b);
-      let numChildren = nextSteps.length;
+      const maxNodes = parseInt(document.getElementById("nodeCount").value) || 15;
+      const data = generateTreeLayout(maxNodes);
 
-      if (numChildren === 0) {
-        logError(`Node ${x} at Depth ${currentDepth} hit a dead end (no integer branches found).`);
-      }
+      let structuralMarkup = "";
 
-      nextSteps.forEach((step, index) => {
-        let childX = xPos;
-        if (numChildren > 1) {
-          let offset = (index - (numChildren - 1) / 2) * horizontalSpacing;
-          childX += offset;
+      // Step 3: Write raw template data directly into string lines to avoid DOM collision lag
+      data.edges.forEach(edge => {
+        let pNode = data.nodes.find(n => n.id === edge.from);
+        let cNode = data.nodes.find(n => n.id === edge.to);
+        if (pNode && cNode) {
+          structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
+          // Inject exact remainder paths along middle coordinate points
+          let mx = (pNode.x + cNode.x) / 2 - 12;
+          let my = (pNode.y + cNode.y) / 2;
+          structuralMarkup += `<text x="${mx}" y="${my}" style="fill:#ffaa00; font-size:10px;">d:${edge.digit}</text>`;
         }
-        let childY = yPos + 90; 
-
-        createline(canvas, xPos, yPos, childX, childY, step.digit);
-        buildBranch(canvas, step.nextX, mode, a, b, currentDepth + 1, maxDepth, childX, childY, horizontalSpacing * 0.5);
       });
 
-      createNode(canvas, xPos, yPos, 20, x);
+      data.nodes.forEach(node => {
+        structuralMarkup += `
+          <g>
+            <circle cx="${node.x}" cy="${node.y}" r="18" />
+            <text x="${node.x}" y="${node.y}">${node.val}</text>
+          </g>
+        `;
+      });
+
+      // Inject the whole layout structure directly into the document window
+      canvas.innerHTML = structuralMarkup;
     }
 
-    function renderTree() {
-      const svgCanvas = document.getElementById("tree");
-      if (!svgCanvas) return;
-      
-      clearCanvas(svgCanvas);
-      
-      const mode = document.getElementById("algoMode").value;
-      const a = parseInt(document.getElementById("baseA").value) || 3;
-      const b = parseInt(document.getElementById("baseB").value) || 2;
-      const rootVal = parseInt(document.getElementById("rootVal").value);
-      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
-
-      if (isNaN(rootVal)) {
-        logError("Please enter a valid number for Root Value.");
-        return;
-      }
-
-      // Hardcoded center alignment coordinates inside standard 1000x700 ViewBox boundaries
-      const startX = 500; 
-      const startY = 50;
-      const initialHorizontalSpread = 300;
-
-      buildBranch(svgCanvas, rootVal, mode, a, b, 1, maxDepth, startX, startY, initialHorizontalSpread);
-    }
-
-    // Trigger on load
-    window.onload = renderTree;
+    // Bind clean listener triggers and bypass automatic timing crashes
+    document.getElementById("renderBtn").addEventListener("click", render);
+    window.onload = render;
   </script>
 </body>
 </html>
