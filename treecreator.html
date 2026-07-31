@@ -13,14 +13,14 @@
     #svg-layer { border: 1px solid #333; display: block; background: #050505; margin-top: 10px; width: 100%; height: 600px; }
     line { stroke: #00ff00; stroke-width: 2; }
     circle { fill: #000000; stroke: #00ff00; stroke-width: 2; }
-    text { fill: #00ff00; font-size: 13px; text-anchor: middle; dominant-baseline: central; font-weight: bold; }
+    text { fill: #00ff00; font-size: 11px; text-anchor: middle; dominant-baseline: central; font-weight: bold; }
     .digit-label { fill: #ffaa00; font-size: 11px; }
-    #info-panel { margin-top: 10px; color: #888; font-size: 12px; }
+    #info-panel { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.5; }
   </style>
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: RATIONAL BASE a/b BRANCHING TREE</h1>
+  <h1>[SYS_STATUS]: TRUE POSITIONAL RATIONAL BASE a/b TREE</h1>
   
   <div class="controls">
     <div class="param-group">
@@ -32,42 +32,42 @@
       <input type="number" id="baseB" value="2" min="1">
     </div>
     <div class="param-group">
-      <label>Root Value (x):</label>
-      <input type="number" id="rootVal" value="2">
+      <label>Target Integer (N):</label>
+      <input type="number" id="rootVal" value="4">
     </div>
     <div class="param-group">
-      <label>Max Layers:</label>
-      <input type="number" id="maxDepth" value="5" min="1" max="7">
+      <label>Max Depth:</label>
+      <input type="number" id="maxDepth" value="4" min="1" max="6">
     </div>
-    <button id="renderBtn">GENERATE BRANCHING TREE</button>
+    <button id="renderBtn">RENDER ACCURATE TREE</button>
   </div>
 
   <svg id="svg-layer" viewBox="0 0 1000 650"></svg>
   
   <div id="info-panel">
-    * Tree branches accurately based on the forward fractional sequence: x_child = (a * x_parent - d) / b
+    * <strong>Root Node</strong> represents your target base-10 integer.<br>
+    * <strong>Branch Nodes</strong> display their precise, independent positional contribution value to the total sum: <strong>d * (b/a)^depth</strong>.
   </div>
 
   <script>
-    // Evaluates the genuine forward rational branching steps
-    function calculateChildren(x, a, b) {
-      let validBranches = [];
-      // Digit set ranges from 0 to a-1
+    // Pure mathematical positional resolution engine
+    function getValidDigitsForState(remainderState, a, b) {
+      let validDigits = [];
+      // Positional digits for base a/b strictly range from 0 up to a-1
       for (let d = 0; d < a; d++) {
-        let remainder = (a * x) - d;
-        if (remainder % b === 0) {
-          let childValue = remainder / b;
-          validBranches.push({ value: childValue, digit: d });
+        let numericCheck = (a * remainderState) - d;
+        if (numericCheck % b === 0) {
+          validDigits.push({ nextState: numericCheck / b, digit: d });
         }
       }
-      return validBranches;
+      return validDigits;
     }
 
     function buildTreeData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
       const rootVal = parseInt(document.getElementById("rootVal").value);
-      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 5;
+      const maxDepth = parseInt(document.getElementById("maxDepth").value) || 4;
 
       if (isNaN(rootVal)) return null;
 
@@ -75,8 +75,17 @@
       let edges = [];
       let globalIdCounter = 0;
 
-      // Queue manages positioning using an explicit horizontal layout width boundary constraint
-      let queue = [{ id: globalIdCounter++, val: rootVal, depth: 0, x: 500, y: 50, xMin: 0, xMax: 1000 }];
+      // Queue keeps track of the spatial canvas constraints alongside the running mathematical state evaluation
+      let queue = [{ 
+        id: globalIdCounter++, 
+        state: rootVal, 
+        displayVal: rootVal.toString(), // Root retains its clean initial base-10 target integer presentation
+        depth: 0, 
+        x: 500, 
+        y: 50, 
+        xMin: 0, 
+        xMax: 1000 
+      }];
 
       while (queue.length > 0) {
         let current = queue.shift();
@@ -84,22 +93,29 @@
 
         if (current.depth >= maxDepth) continue;
 
-        let children = calculateChildren(current.val, a, b);
-        let nChildren = children.length;
+        let branches = getValidDigitsForState(current.state, a, b);
+        let nChildren = branches.length;
         if (nChildren === 0) continue;
 
-        // Space allocation slices the parent's horizontal window region evenly
         let segmentWidth = (current.xMax - current.xMin) / nChildren;
 
-        children.forEach((child, index) => {
+        branches.forEach((branch, index) => {
           let childXMin = current.xMin + (index * segmentWidth);
           let childXMax = childXMin + segmentWidth;
           let childX = childXMin + (segmentWidth / 2);
-          let childY = 50 + ((current.depth + 1) * 100); // Level vertical descent height
+          let childY = 50 + ((current.depth + 1) * 110);
+
+          // Correctly calculate the node's true place value contribution: d * (b/a)^depth
+          let placeValueWeight = Math.pow(b / a, current.depth + 1);
+          let exactContribution = branch.digit * placeValueWeight;
+          
+          // Formats values into clean, scannable decimals (e.g. 0.67 instead of 0.666666666)
+          let nodeLabel = exactContribution === 0 ? "0" : exactContribution.toFixed(2);
 
           let childNode = {
             id: globalIdCounter++,
-            val: child.value,
+            state: branch.nextState,
+            displayVal: nodeLabel,
             depth: current.depth + 1,
             x: childX,
             y: childY,
@@ -110,7 +126,7 @@
           edges.push({
             fromId: current.id,
             toId: childNode.id,
-            digit: child.digit
+            digit: branch.digit
           });
 
           queue.push(childNode);
@@ -130,25 +146,24 @@
 
       let structuralMarkup = "";
 
-      // Step 1: Draw clean layout branch connectors
+      // Step 1: Paint branch connector tracks
       data.edges.forEach(edge => {
         let pNode = data.nodes.find(n => n.id === edge.fromId);
         let cNode = data.nodes.find(n => n.id === edge.toId);
         if (pNode && cNode) {
           structuralMarkup += `<line x1="${pNode.x}" y1="${pNode.y}" x2="${cNode.x}" y2="${cNode.y}" />`;
-          
           let mx = (pNode.x + cNode.x) / 2;
           let my = (pNode.y + cNode.y) / 2 - 10;
           structuralMarkup += `<text x="${mx}" y="${my}" class="digit-label">d:${edge.digit}</text>`;
         }
       });
 
-      // Step 2: Draw individual vector nodes on top
+      // Step 2: Paint accurate value vector nodes
       data.nodes.forEach(node => {
         structuralMarkup += `
           <g>
-            <circle cx="${node.x}" cy="${node.y}" r="18" />
-            <text x="${node.x}" y="${node.y}">${node.val}</text>
+            <circle cx="${node.x}" cy="${node.y}" r="22" />
+            <text x="${node.x}" y="${node.y}">${node.displayVal}</text>
           </g>
         `;
       });
@@ -161,4 +176,5 @@
   </script>
 </body>
 </html>
+
 
