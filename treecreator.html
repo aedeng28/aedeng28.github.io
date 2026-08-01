@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Base a/b Tree</title>
+  <title>Balanced Base a/b Tree</title>
   <style>
     body { font-family: monospace; background: #000; color: #0f0; margin: 0; padding: 10px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; }
     h1 { margin: 5px 0; font-size: 1.1rem; flex-shrink: 0; }
@@ -26,7 +26,7 @@
 </head>
 <body>
 
-  <h1>[SYS_STATUS]: BASE a/b TREE (ALL MULTIPLES)</h1>
+  <h1>[SYS_STATUS]: BALANCED BASE a/b TREE</h1>
   
   <div class="controls">
     <div class="param"><label>a:</label><input type="number" id="baseA" value="3" min="2"></div>
@@ -48,7 +48,9 @@
   <script>
     const svg = document.getElementById("svg");
     const tip = document.getElementById("tip");
-    let view = { x: 19000, y: 0, w: 2000, h: 1200 }, isDrag = false, start = { x: 0, y: 0 };
+    let view = { x: 0, y: 0, w: 2000, h: 1200 }, isDrag = false, start = { x: 0, y: 0 };
+    let leafXCounter = 0; // Tracks uniform incremental spacing positions for bottom leaf nodes
+    const nodeSpacing = 80; // Distance between adjacent leaf nodes
 
     function getBranches(x, a, b) {
       let res = [];
@@ -60,34 +62,74 @@
       return res;
     }
 
+    // Build the tree nodes using a clean parent/children structure instead of raw spatial cuts
+    function buildBalancedTree(node, depth, maxDepth, a, b, nodes, edges) {
+      nodes.push(node);
+
+      if (depth >= maxDepth) {
+        // Assign absolute position to the leaf node
+        node.x = leafXCounter;
+        leafXCounter += nodeSpacing;
+        return;
+      }
+
+      let kidsData = getBranches(node.val, a, b);
+      node.children = [];
+
+      if (kidsData.length === 0) {
+        node.x = leafXCounter;
+        leafXCounter += nodeSpacing;
+        return;
+      }
+
+      kidsData.forEach((k, i) => {
+        let childNode = {
+          id: nodes.length + qCount(node.children, depth, maxDepth), // Unique placeholder helper
+          val: k.val,
+          path: node.path + k.d,
+          depth: depth + 1,
+          y: 80 + (depth + 1) * 160,
+          children: []
+        };
+        node.children.push(childNode);
+        edges.push({ fromNode: node, toNode: childNode, d: k.d });
+        buildBalancedTree(childNode, depth + 1, maxDepth, a, b, nodes, edges);
+      });
+
+      // KEY FIX: Position this parent directly at the average center of its true kids
+      let sumX = 0;
+      node.children.forEach(c => sumX += c.x);
+      node.x = sumX / node.children.length;
+    }
+
+    function qCount(arr, depth, max) { return arr.length; } // Stub helper
+
     function buildData() {
       const a = parseInt(document.getElementById("baseA").value) || 3;
       const b = parseInt(document.getElementById("baseB").value) || 2;
       const max = parseInt(document.getElementById("maxDepth").value) || 5;
-      let nodes = [], edges = [], id = 0;
-      let q = [{ id: id++, val: 0, path: "", depth: 0, x: 20000, y: 80, min: 0, max: 40000 }];
-
-      while (q.length > 0) {
-        let curr = q.shift();
-        nodes.push(curr);
-        if (curr.depth >= max) continue;
-
-        let kids = getBranches(curr.val, a, b);
-        if (kids.length === 0) continue;
-        let w = (curr.max - curr.min) / kids.length;
-
-        kids.forEach((k, i) => {
-          let xMin = curr.min + (i * w), xMax = xMin + w;
-          let child = { id: id++, val: k.val, path: curr.path + k.d, depth: curr.depth + 1, x: xMin + w/2, y: 80 + (curr.depth + 1)*160, min: xMin, max: xMax };
-          edges.push({ from: curr.id, to: child.id, d: k.d });
-          q.push(child);
-        });
-      }
+      
+      leafXCounter = 100; // Reset canvas layout start boundary
+      let nodes = [], edges = [];
+      
+      let root = { id: 0, val: 0, path: "", depth: 0, y: 80, children: [] };
+      buildBalancedTree(root, 0, max, a, b, nodes, edges);
+      
       return { nodes, edges };
     }
 
     function showView() { svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${view.h}`); }
-    function resetView() { view = { x: 19000, y: 0, w: 2000, h: 1200 }; showView(); }
+    
+    function autoRecenter(nodes) {
+      if (nodes.length === 0) return;
+      let rootNode = nodes.find(n => n.id === 0);
+      if (rootNode) {
+        view.w = 2000; view.h = 1200;
+        view.x = rootNode.x - view.w / 2;
+        view.y = 0;
+        showView();
+      }
+    }
 
     function render() {
       svg.innerHTML = '';
@@ -96,11 +138,8 @@
       let html = "";
 
       data.edges.forEach(e => {
-        let p = data.nodes.find(n => n.id === e.from), c = data.nodes.find(n => n.id === e.to);
-        if (p && c) {
-          html += `<line x1="${p.x}" y1="${p.y}" x2="${c.x}" y2="${c.y}" />`;
-          html += `<text x="${(p.x+c.x)/2}" y="${(p.y+c.y)/2 - 8}" class="digit">${e.d}</text>`;
-        }
+        html += `<line x1="${e.fromNode.x}" y1="${e.fromNode.y}" x2="${e.toNode.x}" y2="${e.toNode.y}" />`;
+        html += `<text x="${(e.fromNode.x+e.toNode.x)/2}" y="${(e.fromNode.y+e.toNode.y)/2 - 8}" class="digit">${e.d}</text>`;
       });
 
       data.nodes.forEach(n => {
@@ -109,7 +148,7 @@
       });
 
       svg.innerHTML = html;
-      resetView();
+      autoRecenter(data.nodes);
 
       document.querySelectorAll('.ng').forEach(item => {
         const move = (e) => {
@@ -128,7 +167,7 @@
       view.w *= f; view.h *= f; view.x = cx - view.w/2; view.y = cy - view.h/2; showView();
     }
 
-    const getPos = (e) => ({ x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY });
+    const getPos = (e) => ({ x: e.clientX || (e.touches && e.touches[0].clientX), y: e.clientY || (e.touches && e.touches[0].clientY) });
     const dragStart = (e) => { isDrag = true; start = getPos(e); };
     const dragMove = (e) => {
       if (!isDrag) return;
@@ -143,7 +182,7 @@
     svg.addEventListener("wheel", (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 1.1 : 0.9); });
     document.getElementById("zIn").addEventListener("click", () => zoom(0.8));
     document.getElementById("zOut").addEventListener("click", () => zoom(1.25));
-    document.getElementById("home").addEventListener("click", resetView);
+    document.getElementById("home").addEventListener("click", render);
     document.getElementById("renderBtn").addEventListener("click", render);
     document.getElementById("canvas-container").addEventListener("touchstart", () => tip.style.display = 'none');
     window.onload = render;
