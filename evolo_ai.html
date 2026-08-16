@@ -178,7 +178,6 @@ canvas{position:absolute;top:0;left:0;z-index:1;display:block;}</style></head><b
 </div></div><canvas id="s"></canvas><script>
 const cv=document.getElementById('s'),cx=cv.getContext('2d');
 
-// FIXED: Lock the canvas dimensions immediately at startup so layout shifts don't warp scale heights
 cv.width=window.innerWidth;cv.height=window.innerHeight;
 const GROUND_Y = cv.height - 150; 
 
@@ -313,12 +312,18 @@ function nextGen(){
     pop.sort((a,b)=>b.f-a.f);
     if(pop[0].f>best)best=pop[0].f;
     document.getElementById("b").innerText=Math.round(best);
-    let nP=[clone(pop[0].r),clone(pop[0].r)]; 
+    
+    let nP=[];
+    // FIXED: Properly preserve the top 2 overall winners wrapped in the DNA container layout structure
+    let survivor1 = new DNA(); survivor1.r = clone(pop[0].r); survivor1.f = pop[0].f;
+    let survivor2 = new DNA(); survivor2.r = clone(pop[1].r); survivor2.f = pop[1].f;
+    nP.push(survivor1, survivor2);
+    
     while(nP.length<PS){
         let parent=pop[Math.floor(Math.random()*3)];
         let child=new DNA();child.r=clone(parent.r);mutate(child.r);nP.push(child);
     }
-    pop=nP.map(r=> { let d=new DNA(); d.r=r; return d; });
+    pop=nP;
     cIdx=0;gen++;start();
 }
 function loop(){
@@ -331,7 +336,5 @@ function loop(){
 }
 for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
-
-// FIXED: Prevent the browser canvas resize calculation from overriding the locked initial ground level constant
 window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
 </script></body></html>
