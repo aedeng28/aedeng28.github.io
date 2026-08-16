@@ -178,8 +178,10 @@ canvas{position:absolute;top:0;left:0;z-index:1;display:block;}</style></head><b
 </div></div><canvas id="s"></canvas><script>
 const cv=document.getElementById('s'),cx=cv.getContext('2d');
 
-cv.width=window.innerWidth;cv.height=window.innerHeight;
-const GROUND_Y = cv.height - 150; 
+// HARDLOCK INITIAL DESIGN VALUES (Bypasses browser dynamic distortion calculations entirely)
+cv.width=window.innerWidth || 1200;
+cv.height=window.innerHeight || 800;
+const GROUND_Y = cv.height - 180; // Stable, hard-coded floor position from the screen top
 
 const PS=10,MT=240;
 let pop=[],cIdx=0,gen=1,cc=null,best=0,ticks=0;
@@ -218,7 +220,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
     const codeString = JSON.stringify(pop[cIdx].r);
     navigator.clipboard.writeText(codeString).then(() => {
         const originalText = document.getElementById('copy-btn').innerText;
-        document.getElementById('copy-btn').innerText = "✅ Copied Successfully!";
+        document.getElementById('copy-btn').innerText = "✅ Copied!";
         setTimeout(() => { document.getElementById('copy-btn').innerText = originalText; }, 1500);
     });
 });
@@ -234,7 +236,7 @@ document.getElementById('load-btn').addEventListener('click', () => {
         cc = new Creature(pop[cIdx]);
         ticks = 0;
     } catch(e) {
-        alert("Invalid creature code! Make sure you copied the entire line accurately.");
+        alert("Invalid creature code! Check your text line compilation.");
     }
 });
 
@@ -314,7 +316,6 @@ function nextGen(){
     document.getElementById("b").innerText=Math.round(best);
     
     let nP=[];
-    // FIXED: Properly preserve the top 2 overall winners wrapped in the DNA container layout structure
     let survivor1 = new DNA(); survivor1.r = clone(pop[0].r); survivor1.f = pop[0].f;
     let survivor2 = new DNA(); survivor2.r = clone(pop[1].r); survivor2.f = pop[1].f;
     nP.push(survivor1, survivor2);
@@ -327,7 +328,7 @@ function nextGen(){
     cIdx=0;gen++;start();
 }
 function loop(){
-    cx.clearRect(0,0,cv.width,cv.height);
+    cx.clearRect(0, 0, cv.width, cv.height);
     if(cc){
         cc.update();cc.draw();ticks++;
         if(ticks>=MT){pop[cIdx].f=Math.max(0,cc.getavg()-cc.sX);cIdx++;if(cIdx<PS)start();else nextGen();}
@@ -336,5 +337,6 @@ function loop(){
 }
 for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
-window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
+
+// REMOVED CANVAS RESIZE RE-CALCULATION FOR ROCK-SOLID HEIGHT GROUND LAYOUT INDEPENDENCE
 </script></body></html>
