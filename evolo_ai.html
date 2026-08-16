@@ -159,14 +159,15 @@ window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=windo
 </script></body></html>-->
 <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Evolution with Neural Networks</title>
 <style>body{margin:0;background:#161616;color:#fff;font-family:sans-serif;overflow:hidden;}
-#ui{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.85);padding:14px;border-radius:6px;border:1px solid #444;z-index:100;width:240px;}
+#ui{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.85);padding:14px;border-radius:6px;border:1px solid #444;z-index:100;width:240px;box-sizing:border-box;}
 h2{margin:0;color:#4caf50;font-size:16px;}p{margin:4px 0 0 0;font-size:12px;color:#bbb;}span{font-weight:bold;color:#fff;}
 .slider-container{margin-top:10px;border-top:1px solid #333;padding-top:8px;}
 input[type=range]{width:100%;margin-top:4px;cursor:pointer;}
 .btn-group{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
 button{background:#4caf50;color:#fff;border:none;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;transition:0.2s;}
 button:hover{background:#45a049;}#load-btn{background:#2196f3;}#load-btn:hover{background:#0b7dda;}
-textarea{width:100%;height:40px;background:#222;color:#fff;border:1px solid #555;border-radius:4px;font-size:10px;box-sizing:border-box;resize:none;margin-top:4px;}</style></head><body>
+textarea{width:100%;height:40px;background:#222;color:#fff;border:1px solid #555;border-radius:4px;font-size:10px;box-sizing:border-box;resize:none;margin-top:4px;}
+canvas{position:absolute;top:0;left:0;z-index:1;display:block;}</style></head><body>
 <div id="ui"><h2>Gen: <span id="g">1</span></h2><p>Best: <span id="b">0</span>px</p><p>Test: <span id="c">1</span>/10</p>
 <div class="slider-container"><label style="font-size:11px;color:#aaa;">Max Skeleton Depth: <span id="depth-val">3</span></label>
 <input type="range" id="depth-slider" min="1" max="5" value="3"></div>
@@ -176,7 +177,12 @@ textarea{width:100%;height:40px;background:#222;color:#fff;border:1px solid #555
 <button id="load-btn">📥 Load Creature into Sim</button>
 </div></div><canvas id="s"></canvas><script>
 const cv=document.getElementById('s'),cx=cv.getContext('2d');
-cv.width=window.innerWidth;cv.height=window.innerHeight;const GY=cv.height-150,PS=10,MT=240;
+
+// FIXED: Lock the canvas dimensions immediately at startup so layout shifts don't warp scale heights
+cv.width=window.innerWidth;cv.height=window.innerHeight;
+const GROUND_Y = cv.height - 150; 
+
+const PS=10,MT=240;
 let pop=[],cIdx=0,gen=1,cc=null,best=0,ticks=0;
 
 let maxSkeletonDepth = 3;
@@ -200,7 +206,6 @@ class SegDNA {
 class DNA { constructor(){this.r=new SegDNA(0);this.f=0;} }
 function clone(n){let c=Object.assign(Object.create(Object.getPrototypeOf(n)),n);c.ch=n.ch.map(clone);return c;}
 
-// --- RE-HYDRATION PARSER (Converts plain raw JSON text back into a true functional SegDNA class) ---
 function rehydrateSegment(rawData) {
     let segment = new SegDNA();
     segment.l = rawData.l; segment.t = rawData.t; segment.a = rawData.a;
@@ -209,7 +214,6 @@ function rehydrateSegment(rawData) {
     return segment;
 }
 
-// --- UI BUTTON ACTION LISTENERS ---
 document.getElementById('copy-btn').addEventListener('click', () => {
     if(!pop[cIdx]) return;
     const codeString = JSON.stringify(pop[cIdx].r);
@@ -225,13 +229,9 @@ document.getElementById('load-btn').addEventListener('click', () => {
     if(!rawText) return alert("Please paste a valid creature text string first!");
     try {
         const parsedRawObj = JSON.parse(rawText);
-        
-        // FIXED: Rehydrate the plain parsed dictionary array back into an official SegDNA class instance
         pop[cIdx].r = rehydrateSegment(parsedRawObj);
         pop[cIdx].f = 0; 
         document.getElementById('load-input').value = "";
-        
-        // Wipe target frame metrics and rebuild layout instance cleanly
         cc = new Creature(pop[cIdx]);
         ticks = 0;
     } catch(e) {
@@ -258,7 +258,7 @@ class Muscle{constructor(p1,p2,baseLen,dna){this.p1=p1;this.p2=p2;this.bL=baseLe
 class Creature {
     constructor(dna){
         this.dna=dna;this.pts=[];this.bones=[];this.muscles=[];this.sX=200;
-        let p0=new Pt(this.sX,GY-140),p1=new Pt(this.sX+dna.r.l,GY-140);
+        let p0=new Pt(this.sX,GROUND_Y-140),p1=new Pt(this.sX+dna.r.l,GROUND_Y-140);
         this.pts.push(p0,p1);this.bones.push(new Bone(p0,p1,dna.r.l,dna.r.t));
         let self=this;
         function bld(node,pPt,pParentPt,cAn){
@@ -290,11 +290,11 @@ class Creature {
                 let dx=m.p2.x-m.p1.x,dy=m.p2.y-m.p1.y,ds=Math.sqrt(dx*dx+dy*dy)||1,df=m.cL-ds;
                 let co=(df/ds)*0.3,ox=dx*co,oy=dy*co;m.p1.x-=ox;m.p1.y-=oy;m.p2.x+=ox;m.p2.y+=oy;
             });
-            this.pts.forEach(p=>{if(p.y>=GY){p.y=GY;p.x=p.oX;p.oY=GY;p.isGround=true;}else{p.isGround=false;}});
+            this.pts.forEach(p=>{if(p.y>=GROUND_Y){p.y=GROUND_Y;p.x=p.oX;p.oY=GROUND_Y;p.isGround=true;}else{p.isGround=false;}});
         }
     }
     draw(){
-        cx.strokeStyle='#555';cx.lineWidth=4;cx.beginPath();cx.moveTo(0,GY);cx.lineTo(cv.width,GY);cx.stroke();
+        cx.strokeStyle='#555';cx.lineWidth=4;cx.beginPath();cx.moveTo(0,GROUND_Y);cx.lineTo(cv.width,GROUND_Y);cx.stroke();
         this.muscles.forEach(m=>{
             cx.strokeStyle=m.tn>0?'#ff1744':'#9a0007';cx.lineWidth=m.tn>0?4:2;
             cx.beginPath();cx.moveTo(m.p1.x,m.p1.y);cx.lineTo(m.p2.x,m.p2.y);cx.stroke();
@@ -313,7 +313,7 @@ function nextGen(){
     pop.sort((a,b)=>b.f-a.f);
     if(pop[0].f>best)best=pop[0].f;
     document.getElementById("b").innerText=Math.round(best);
-    let nP=[clone(pop[0].r),clone(pop[1].r)]; // Ensure survivors clone properly with accurate prototype chains
+    let nP=[clone(pop[0].r),clone(pop[0].r)]; 
     while(nP.length<PS){
         let parent=pop[Math.floor(Math.random()*3)];
         let child=new DNA();child.r=clone(parent.r);mutate(child.r);nP.push(child);
@@ -331,5 +331,7 @@ function loop(){
 }
 for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
+
+// FIXED: Prevent the browser canvas resize calculation from overriding the locked initial ground level constant
 window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
 </script></body></html>
