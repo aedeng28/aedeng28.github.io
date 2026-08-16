@@ -185,36 +185,6 @@ document.getElementById('depth-slider').addEventListener('input', (e) => {
     document.getElementById('depth-val').innerText = maxSkeletonDepth;
 });
 
-// --- UI BUTTON ACTION LISTENERS (SAVE / LOAD BLUEPRINTS) ---
-document.getElementById('copy-btn').addEventListener('click', () => {
-    if(!pop[cIdx]) return;
-    // Extract the raw structural genotype and serialize it into a compact text code string
-    const codeString = JSON.stringify(pop[cIdx].r);
-    navigator.clipboard.writeText(codeString).then(() => {
-        const originalText = document.getElementById('copy-btn').innerText;
-        document.getElementById('copy-btn').innerText = "✅ Copied Successfully!";
-        setTimeout(() => { document.getElementById('copy-btn').innerText = originalText; }, 1500);
-    });
-});
-
-document.getElementById('load-btn').addEventListener('click', () => {
-    const rawText = document.getElementById('load-input').value.trim();
-    if(!rawText) return alert("Please paste a valid creature text string first!");
-    try {
-        const parsedRootSegment = JSON.parse(rawText);
-        // Inject the loaded configuration directly into the currently active slot
-        pop[cIdx].r = parsedRootSegment;
-        pop[cIdx].f = 0; // Reset target fitness benchmark
-        document.getElementById('load-input').value = "";
-        
-        // Soft reboot the active layout engine instance immediately with the new structure
-        cc = new Creature(pop[cIdx]);
-        ticks = 0;
-    } catch(e) {
-        alert("Invalid creature code! Make sure you copied the entire line accurately.");
-    }
-});
-
 class SegDNA {
     constructor(d=0){
         this.l=Math.random()*20+35;this.t=Math.random()*4+5;this.a=(Math.random()-0.5)*1.8;
@@ -229,6 +199,45 @@ class SegDNA {
 }
 class DNA { constructor(){this.r=new SegDNA(0);this.f=0;} }
 function clone(n){let c=Object.assign(Object.create(Object.getPrototypeOf(n)),n);c.ch=n.ch.map(clone);return c;}
+
+// --- RE-HYDRATION PARSER (Converts plain raw JSON text back into a true functional SegDNA class) ---
+function rehydrateSegment(rawData) {
+    let segment = new SegDNA();
+    segment.l = rawData.l; segment.t = rawData.t; segment.a = rawData.a;
+    segment.weightAngle = rawData.weightAngle; segment.weightTouch = rawData.weightTouch; segment.bias = rawData.bias;
+    segment.ch = (rawData.ch || []).map(childData => rehydrateSegment(childData));
+    return segment;
+}
+
+// --- UI BUTTON ACTION LISTENERS ---
+document.getElementById('copy-btn').addEventListener('click', () => {
+    if(!pop[cIdx]) return;
+    const codeString = JSON.stringify(pop[cIdx].r);
+    navigator.clipboard.writeText(codeString).then(() => {
+        const originalText = document.getElementById('copy-btn').innerText;
+        document.getElementById('copy-btn').innerText = "✅ Copied Successfully!";
+        setTimeout(() => { document.getElementById('copy-btn').innerText = originalText; }, 1500);
+    });
+});
+
+document.getElementById('load-btn').addEventListener('click', () => {
+    const rawText = document.getElementById('load-input').value.trim();
+    if(!rawText) return alert("Please paste a valid creature text string first!");
+    try {
+        const parsedRawObj = JSON.parse(rawText);
+        
+        // FIXED: Rehydrate the plain parsed dictionary array back into an official SegDNA class instance
+        pop[cIdx].r = rehydrateSegment(parsedRawObj);
+        pop[cIdx].f = 0; 
+        document.getElementById('load-input').value = "";
+        
+        // Wipe target frame metrics and rebuild layout instance cleanly
+        cc = new Creature(pop[cIdx]);
+        ticks = 0;
+    } catch(e) {
+        alert("Invalid creature code! Make sure you copied the entire line accurately.");
+    }
+});
 
 function mutate(n, d=0){
     if(Math.random()<0.3)n.l=Math.max(20,Math.min(65,n.l+(Math.random()-0.5)*10));
@@ -304,9 +313,13 @@ function nextGen(){
     pop.sort((a,b)=>b.f-a.f);
     if(pop[0].f>best)best=pop[0].f;
     document.getElementById("b").innerText=Math.round(best);
-    let nP=[pop[0],pop[1]];
-    while(nP.length<PS){let p=pop[Math.floor(Math.random()*3)],c=new DNA();c.r=clone(p.r);mutate(c.r);nP.push(c);}
-    pop=nP;cIdx=0;gen++;start();
+    let nP=[clone(pop[0].r),clone(pop[1].r)]; // Ensure survivors clone properly with accurate prototype chains
+    while(nP.length<PS){
+        let parent=pop[Math.floor(Math.random()*3)];
+        let child=new DNA();child.r=clone(parent.r);mutate(child.r);nP.push(child);
+    }
+    pop=nP.map(r=> { let d=new DNA(); d.r=r; return d; });
+    cIdx=0;gen++;start();
 }
 function loop(){
     cx.clearRect(0,0,cv.width,cv.height);
