@@ -3,6 +3,7 @@ const cv = document.getElementById('s'), cx = cv.getContext('2d');
 const nc = document.getElementById('nc'), nx = nc.getContext('2d');
 cv.width = window.innerWidth; cv.height = window.innerHeight; const GY = cv.height - 180;
 
+
 document.getElementById('ds').addEventListener('input', (e) => { window.maxD = parseInt(e.target.value); document.getElementById('dv').innerText = window.maxD; });
 document.getElementById('sb').addEventListener('click', () => { window.simSpeed = window.simSpeed === 1 ? 2 : window.simSpeed === 2 ? 5 : 1; document.getElementById('sb').innerText = `⏩ Speed: ${window.simSpeed}x`; });
 
