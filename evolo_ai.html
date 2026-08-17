@@ -240,12 +240,12 @@ class Creature {
             self.muscles.push(new Muscle(pParentPt,eP,ds,node));node.ch.forEach(c=>bld(c,eP,pPt,a));
         }
         dna.r.ch.forEach(c=>bld(c,p1,p0,0));
-        this.sV=[0,0,0,0];this.hV=[0,0,0,0];this.oV=[0,0,0,0];
+        this.sV=;this.hV=;this.oV=;
     }
     update(){
         this.pts.forEach(p=>{let vx=(p.x-p.oX)*0.85,vy=(p.y-p.oY)*0.85;p.oX=p.x;p.oY=p.y;p.x+=vx;p.y+=vy+0.45;});
-        let mb=this.bones[0];
-        this.sV[0]=Math.sin(ticks*0.05);this.sV[1]=Math.atan2(mb.p2.y-mb.p1.y,mb.p2.x-mb.p1.x);this.sV[2]=this.pts.some(p=>p.ig)?1:0;this.sV[3]=Math.sin(rtc*0.1);
+        let mb=this.bones;
+        this.sV=Math.sin(ticks*0.05);this.sV=Math.atan2(mb.p2.y-mb.p1.y,mb.p2.x-mb.p1.x);this.sV=this.pts.some(p=>p.ig)?1:0;this.sV=Math.sin(rtc*0.1);
         let dB=this.dna.r;
         for(let h=0;h<4;h++){let sum=dB.bi[h];for(let i=0;i<4;i++)sum+=this.sV[i]*dB.wIH[h*4+i];this.hV[h]=Math.tanh(sum);}
         for(let o=0;o<4;o++){let sum=dB.bi[4+o];for(let h=0;h<4;h++)sum+=this.hV[h]*dB.wHO[o*4+h];this.oV[o]=Math.tanh(sum);}
@@ -269,8 +269,27 @@ class Creature {
 function drFB(sV,hV,oV,dB){
     nx.clearRect(0,0,nc.width,nc.height);let sX=25,hX=115,oX=205;
     let sY=Array.from({length:4},(_,i)=>35+i*40),hY=Array.from({length:4},(_,i)=>35+i*40),oY=Array.from({length:4},(_,i)=>35+i*40);
-    for(let i=0;i<4;i++){for(let h=0;h<4;h++){let w=dB.wIH[h*4+i];nx.lineWidth=Math.abs(w)*2+0.5;nx.strokeStyle=w>0?'rgba(76,175,80,0.3)':'rgba(255,23,68,0.3)';nx.beginPath();nx.moveTo(sX,sY[i]);nx.lineTo(hX,hY[h]);nx.stroke();}}
-    for(let h=0;h<4;h++){for(let o=0;o<4;o++){let w=dB.wHO[o*4+h];nx.lineWidth=Math.abs(w)*2+0.5;nx.strokeStyle=w>0?'rgba(76,175,80,0.3)':'rgba(255,23,68,0.3)';nx.beginPath();nx.moveTo(hX,hY[h]);nx.lineTo(oX,oY[o]);nx.stroke();}}
+    
+    // FIXED: Synaptic lines now multiply their opacity by the firing values of the nodes themselves
+    for(let i=0;i<4;i++){
+        let inputSignalIntensity = Math.abs(sV[i]);
+        for(let h=0;h<4;h++){
+            let w=dB.wIH[h*4+i];nx.lineWidth=Math.abs(w)*2.5+0.5;
+            // Opacity pulses dynamically between 0.1 and 0.8 depending on live signal flow
+            let op = Math.max(0.1, Math.min(0.8, inputSignalIntensity * 0.8));
+            nx.strokeStyle=w>0?`rgba(76,175,80,${op})`:`rgba(255,23,68,${op})`;
+            nx.beginPath();nx.moveTo(sX,sY[i]);nx.lineTo(hX,hY[h]);nx.stroke();
+        }
+    }
+    for(let h=0;h<4;h++){
+        let hiddenSignalIntensity = Math.abs(hV[h]);
+        for(let o=0;o<4;o++){
+            let w=dB.wHO[o*4+h];nx.lineWidth=Math.abs(w)*2.5+0.5;
+            let op = Math.max(0.1, Math.min(0.8, hiddenSignalIntensity * 0.8));
+            nx.strokeStyle=w>0?`rgba(76,175,80,${op})`:`rgba(255,23,68,${op})`;
+            nx.beginPath();nx.moveTo(hX,hY[h]);nx.lineTo(oX,oY[o]);nx.stroke();
+        }
+    }
     for(let i=0;i<4;i++){nx.fillStyle='#fff';nx.shadowBlur=Math.abs(sV[i])*10;nx.shadowColor='#2196f3';nx.beginPath();nx.arc(sX,sY[i],6,0,Math.PI*2);nx.fill();}
     for(let h=0;h<4;h++){nx.fillStyle='#fff';nx.shadowBlur=Math.abs(hV[h])*10;nx.shadowColor='#9c27b0';nx.beginPath();nx.arc(hX,hY[h],6,0,Math.PI*2);nx.fill();}
     for(let o=0;o<4;o++){nx.fillStyle='#fff';nx.shadowBlur=Math.abs(oV[o])*12;nx.shadowColor=oV[o]>0?'#ff1744':'#b71c1c';nx.beginPath();nx.arc(oX,oY[o],6,0,Math.PI*2);nx.fill();}
@@ -279,8 +298,8 @@ function drFB(sV,hV,oV,dB){
 
 function start(){document.getElementById("g").innerText=gen;document.getElementById("c").innerText=cIdx+1;cc=new Creature(pop[cIdx]);ticks=0;}
 function nextGen(){
-    pop.sort((a,b)=>b.f-a.f);if(pop[0].f>best)best=pop[0].f;document.getElementById("b").innerText=Math.round(best);
-    let nP=[];let s1=new DNA();s1.r=clone(pop[0].r);s1.f=pop[0].f;let s2=new DNA();s2.r=clone(pop[0].r);s2.f=pop[0].f;nP.push(s1,s2);
+    pop.sort((a,b)=>b.f-a.f);if(pop.f>best)best=pop.f;document.getElementById("b").innerText=Math.round(best);
+    let nP=[];let s1=new DNA();s1.r=clone(pop.r);s1.f=pop.f;let s2=new DNA();s2.r=clone(pop.r);s2.f=pop.f;nP.push(s1,s2);
     while(nP.length<PS){let p=pop[Math.floor(Math.random()*3)];let c=new DNA();c.r=clone(p.r);mutate(c.r);nP.push(c);}
     pop=nP;cIdx=0;gen++;start();
 }
@@ -289,4 +308,3 @@ for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
 window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
 </script></body></html>
-
