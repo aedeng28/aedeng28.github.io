@@ -1,11 +1,10 @@
-// --- GLOBAL LAB CONFIGURATIONS (Loaded First) ---
-let maxD = 3;
-let brainMode = "SIMPLE";
-let PS = 10;
-let MT = 240;
-let pop = [], cIdx = 0, gen = 1, cc = null, best = 0, ticks = 0, rtc = 0, camX = 0, simSpeed = 1, started = false;
+// --- ATTACH SHARED VALUES TO THE GLOBAL VIEWPORT LAYER ---
+window.maxD = 3;
+window.brainMode = "SIMPLE";
+window.PS = 10;
+window.MT = 240;
+window.pop = []; window.cIdx = 0; window.gen = 1; window.cc = null; window.best = 0; window.ticks = 0; window.rtc = 0; window.camX = 0; window.simSpeed = 1; window.started = false;
 
-// --- GENOTYPE BLUEPRINT ENGINE ---
 const randW = (n) => {
     let a = [];
     for (let i = 0; i < n; i++) a.push((Math.random() - 0.5) * 2);
@@ -20,11 +19,9 @@ class SegDNA {
         this.t = Math.random() * 4 + 5; 
         this.a = (Math.random() - 0.5) * 1.8;
         
-        // Simple brain clock parameters
         this.phase = Math.random() * Math.PI * 2; 
         this.speed = Math.random() * 0.12 + 0.06;
         
-        // Smart matrix synapse layers
         this.wIH = randW(16); 
         this.wHO = randW(16); 
         this.bi = randW(8); 
@@ -32,19 +29,14 @@ class SegDNA {
         
         if (d === 0) {
             this.ch.push(new SegDNA(1), new SegDNA(1));
-        } else if (d < maxD && Math.random() < 0.7) {
+        } else if (d < window.maxD && Math.random() < 0.7) {
             this.ch.push(new SegDNA(d + 1));
             if (Math.random() < 0.3) this.ch.push(new SegDNA(d + 1));
         }
     }
 }
 
-class DNA { 
-    constructor() { 
-        this.r = new SegDNA(0); 
-        this.f = 0; 
-    } 
-}
+class DNA { constructor() { this.r = new SegDNA(0); this.f = 0; } }
 
 function clone(n) {
     let c = Object.assign(Object.create(Object.getPrototypeOf(n)), n);
@@ -66,7 +58,7 @@ function mutate(n, d = 0) {
     if (Math.random() < 0.3) n.t = Math.max(4, Math.min(12, n.t + (Math.random() - 0.5) * 2));
     if (Math.random() < 0.3) n.a = Math.max(-2, Math.min(2, n.a + (Math.random() - 0.5) * 0.3));
     
-    if (brainMode === "SIMPLE") {
+    if (window.brainMode === "SIMPLE") {
         if (Math.random() < 0.3) n.phase += (Math.random() - 0.5) * 0.5;
         if (Math.random() < 0.3) n.speed = Math.max(0.03, Math.min(0.25, n.speed + (Math.random() - 0.5) * 0.02));
     } else {
@@ -75,8 +67,12 @@ function mutate(n, d = 0) {
         n.bi = mutW(n.bi, 0.35, 0.2);
     }
     
-    if (Math.random() < 0.15 && d < maxD && n.ch.length < 3) n.ch.push(new SegDNA(d + 1));
-    if ((n.ch.length > 0 && d > 0 && Math.random() < 0.05) || (d >= maxD)) n.ch.splice(0, n.ch.length);
+    if (Math.random() < 0.15 && d < window.maxD && n.ch.length < 3) n.ch.push(new SegDNA(d + 1));
+    if ((n.ch.length > 0 && d > 0 && Math.random() < 0.05) || (d >= window.maxD)) n.ch.splice(0, n.ch.length);
     
     n.ch.forEach(c => mutate(c, d + 1));
 }
+
+// Make functions visible globally
+window.DNA = DNA; window.clone = clone; window.rehydrate = rehydrate; window.mutate = mutate;
+
