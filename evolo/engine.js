@@ -3,9 +3,7 @@ const cv = document.getElementById('s'), cx = cv.getContext('2d');
 const nc = document.getElementById('nc'), nx = nc.getContext('2d');
 
 cv.width = window.innerWidth; cv.height = window.innerHeight;
-const GY = cv.height - 180, PS = 10, MT = 240;
-
-let pop = [], cIdx = 0, gen = 1, cc = null, best = 0, ticks = 0, maxD = 3, rtc = 0, camX = 0, simSpeed = 1, brainMode = "SIMPLE", started = false;
+const GY = cv.height - 180;
 
 document.getElementById('ds').addEventListener('input', (e) => {
     maxD = parseInt(e.target.value);
@@ -57,7 +55,6 @@ class Creature {
         }
         dna.r.ch.forEach(c => bld(c, p1, p0, 0));
         
-        // FIXED: Properly set to empty arrays so it passes compilation checks
         this.sV = []; 
         this.hV = []; 
         this.oV = [];
@@ -70,10 +67,12 @@ class Creature {
             this.muscles.forEach(m => { if (m.d) { m.tn = Math.sin(rtc * m.d.speed + m.d.phase); m.cL = m.bL * (1 + m.tn * 0.35); } });
         } else {
             let mb = this.bones.find(() => true);
-            this.sV[0] = Math.sin(ticks * 0.05);
-            this.sV[1] = mb ? Math.atan2(mb.p2.y - mb.p1.y, mb.p2.x - mb.p1.x) : 0;
-            this.sV[2] = this.pts.some(p => p.ig) ? 1 : 0;
-            this.sV[3] = Math.sin(rtc * 0.1);
+            this.sV = [
+                Math.sin(ticks * 0.05),
+                mb ? Math.atan2(mb.p2.y - mb.p1.y, mb.p2.x - mb.p1.x) : 0,
+                this.pts.some(p => p.ig) ? 1 : 0,
+                Math.sin(rtc * 0.1)
+            ];
             let dB = this.dna.r;
             for (let h = 0; h < 4; h++) { 
                 let sum = dB.bi[h]; 
