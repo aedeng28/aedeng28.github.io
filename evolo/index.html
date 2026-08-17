@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Evolution Lab Workspace</title>
+    <style>
+        body { margin: 0; background: #161616; color: #fff; font-family: sans-serif; overflow: hidden; }
+        #ui, #nu { position: absolute; top: 10px; background: rgba(0,0,0,0.85); padding: 14px; border-radius: 6px; border: 1px solid #444; z-index: 100; width: 240px; box-sizing: border-box; }
+        #ui { left: 10px; } #nu { right: 10px; }
+        h2 { margin: 0; color: #4caf50; font-size: 16px; } 
+        p { margin: 4px 0 0 0; font-size: 12px; color: #bbb; } 
+        span { font-weight: bold; color: #fff; }
+        input[type=range], textarea { width: 100%; margin-top: 4px; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; }
+        button { background: #4caf50; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; width: 100%; margin-top: 6px; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+    </style>
+    
+    <!-- LOAD YOUR SCRIPTS IN CRITICAL ORDER -->
+    <script defer src="dna.js"></script>
+    <script defer src="engine.js"></script>
+</head>
+<body>
+
+    <div id="ui">
+        <h2>Gen: <span id="g">1</span></h2>
+        <p>Best: <span id="b">0</span>px</p>
+        <p>Test: <span id="c">1</span>/10</p>
+        <div style="margin-top:8px;">
+            <label style="font-size:11px;color:#aaa;">Max Depth: <span id="dv">3</span></label>
+            <input type="range" id="ds" min="1" max="5" value="3">
+        </div>
+        <button id="tb" style="background:#ff9800;">🧠 Brain: SIMPLE</button>
+        <button id="sb" style="background:#e91e63;">⏩ Speed: 1x</button>
+        <button id="cb">📋 Copy Blueprint</button>
+        <textarea id="li" style="height:35px;margin-top:6px;" placeholder="Paste here..."></textarea>
+        <button id="lb" style="background:#2196f3;margin-top:2px;">📥 Load Creature</button>
+    </div>
+
+    <div id="nu">
+        <h2 style="color:#2196f3;font-size:14px;margin-bottom:6px;">Live Brain Layout</h2>
+        <canvas id="nc" width="215" height="150" style="background:#222;border-radius:4px;"></canvas>
+    </div>
+
+    <canvas id="s"></canvas>
+
+</body>
+</html>
