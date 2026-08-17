@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,13 +11,13 @@
         p { margin: 4px 0 0 0; font-size: 12px; color: #bbb; } 
         span { font-weight: bold; color: #fff; }
         input[type=range], textarea { width: 100%; margin-top: 4px; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; }
-        button { background: #4caf50; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; width: 100%; margin-top: 6px; transition: 0.2s; }
+        button { background: #ff9800; color: #fff; border: none; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; width: 100%; margin-top: 6px; transition: 0.2s; }
         button:hover { filter: brightness(1.1); }
     </style>
     
-    <!-- SYSTEM WORKSPACE SCRIPT SEQUENCE -->
-    <script defer src="dna.js"></script>
-    <script defer src="engine.js"></script>
+    <!-- FIXED: ADDED TIMESTAMP CACHE-BUSTERS (?v=1) TO FORCE IMMEDIATE HARDRIVE SCRIPT RELOADS -->
+    <script defer src="dna.js?v=1"></script>
+    <script defer src="engine.js?v=1"></script>
 </head>
 <body>
 
@@ -30,9 +29,9 @@
             <label style="font-size:11px;color:#aaa;">Max Depth: <span id="dv">3</span></label>
             <input type="range" id="ds" min="1" max="5" value="3">
         </div>
-        <button id="tb" style="background:#ff9800;">🧠 Brain: SIMPLE</button>
+        <button id="tb">🧠 Brain: SIMPLE</button>
         <button id="sb" style="background:#e91e63;">⏩ Speed: 1x</button>
-        <button id="cb">📋 Copy Blueprint</button>
+        <button id="cb" style="background:#4caf50;">📋 Copy Blueprint</button>
         <textarea id="li" style="height:35px;margin-top:6px;" placeholder="Paste here..."></textarea>
         <button id="lb" style="background:#2196f3;margin-top:2px;">📥 Load Creature</button>
     </div>
@@ -46,3 +45,4 @@
 
 </body>
 </html>
+
