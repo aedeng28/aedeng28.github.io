@@ -71,7 +71,9 @@ function start() { document.getElementById("g").innerText = window.gen; document
 function nextGen() {
     window.pop.sort((a, b) => b.f - a.f); if (window.pop[0].f > window.best) window.best = window.pop[0].f; document.getElementById("b").innerText = Math.round(window.best);
     let nP = []; let s1 = new window.DNA(); s1.r = window.clone(window.pop[0].r); s1.f = window.pop[0].f; let s2 = new window.DNA(); s2.r = window.clone(window.pop[0].r); s2.f = window.pop[0].f; nP.push(s1, s2);
-    while (nP.length < window.PS) { let p = window.pop[Math.floor(Math.random() * 3)]; let c = new window.window.DNA(); c.r = window.clone(p.r); window.mutate(c.r); nP.push(c); }
+        // FIXED: Cleaned up the double-window typo so Generation 2 rolls over seamlessly!
+    while (nP.length < window.PS) { let p = window.pop[Math.floor(Math.random() * 3)]; let c = new window.DNA(); c.r = window.clone(p.r); window.mutate(c.r); nP.push(c); }
+
     window.pop = nP; window.cIdx = 0; window.gen++; window.started = false; start();
 }
 function loop() { for (let s = 0; s < window.simSpeed; s++) { if (window.cc) { window.rtc += 0.15; window.cc.update(); window.ticks++; if (window.ticks >= window.MT) { window.pop[window.cIdx].f = Math.max(0, window.cc.getavg() - window.cc.sX); window.cIdx++; if (window.cIdx < window.PS) start(); else nextGen(); } } } cx.clearRect(0, 0, cv.width, cv.height); if (window.cc) window.cc.draw(); requestAnimationFrame(loop); }
