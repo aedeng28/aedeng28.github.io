@@ -5,6 +5,7 @@ window.PS = 10;
 window.MT = 240;
 window.pop = []; window.cIdx = 0; window.gen = 1; window.cc = null; window.best = 0; window.ticks = 0; window.rtc = 0; window.camX = 0; window.simSpeed = 1; window.started = false;
 
+
 const randW = (n) => {
     let a = [];
     for (let i = 0; i < n; i++) a.push((Math.random() - 0.5) * 2);
