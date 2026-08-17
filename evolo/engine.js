@@ -1,15 +1,23 @@
+// --- COMPLETE LIVE RE-BOOT ENGINE & CALCULATOR ---
 const cv = document.getElementById('s'), cx = cv.getContext('2d');
 const nc = document.getElementById('nc'), nx = nc.getContext('2d');
 cv.width = window.innerWidth; cv.height = window.innerHeight; const GY = cv.height - 180;
 
 document.getElementById('ds').addEventListener('input', (e) => { window.maxD = parseInt(e.target.value); document.getElementById('dv').innerText = window.maxD; });
 document.getElementById('sb').addEventListener('click', () => { window.simSpeed = window.simSpeed === 1 ? 2 : window.simSpeed === 2 ? 5 : 1; document.getElementById('sb').innerText = `⏩ Speed: ${window.simSpeed}x`; });
+
+// LIVE RESET HANDLER: Wipes the board and hot-swaps settings instantly
 document.getElementById('tb').addEventListener('click', () => {
-    if (window.started) return alert("Reset the page layout to switch network channels mid-simulation!");
     window.brainMode = window.brainMode === "SIMPLE" ? "SMART" : "SIMPLE";
     document.getElementById('tb').style.background = window.brainMode === "SIMPLE" ? "#ff9800" : "#009688";
-    document.getElementById('tb').innerText = `🧠 Brain: ${window.brainMode}`; initPop();
+    document.getElementById('tb').innerText = `🧠 Brain: ${window.brainMode}`;
+    
+    // Total system reset metrics purge
+    window.gen = 1; window.best = 0; window.cIdx = 0; window.ticks = 0; window.rtc = 0; window.camX = 0;
+    document.getElementById("b").innerText = 0; window.started = false;
+    initPop();
 });
+
 document.getElementById('cb').addEventListener('click', () => { if (window.pop[window.cIdx]) navigator.clipboard.writeText(JSON.stringify(window.pop[window.cIdx].r)); });
 document.getElementById('lb').addEventListener('click', () => { window.started = true; try { window.pop[window.cIdx].r = window.rehydrate(JSON.parse(document.getElementById('li').value.trim())); window.pop[window.cIdx].f = 0; window.cc = new Creature(window.pop[window.cIdx]); window.ticks = 0; } catch (e) { alert("Error parsing layout code!"); } });
 
@@ -63,17 +71,15 @@ function drFB(sV, hV, oV, dB) {
     for (let h = 0; h < 4; h++) { let hdI = Math.abs(hV[h] || 0); for (let o = 0; o < 4; o++) { let w = dB.wHO[o * 4 + h], op = Math.max(0.1, Math.min(0.8, hdI * 0.8)); nx.lineWidth = Math.abs(w) * 2.5 + 0.5; nx.strokeStyle = w > 0 ? `rgba(76,175,80,${op})` : `rgba(255,23,68,${op})`; nx.beginPath(); nx.moveTo(hX, hY[h]); nx.lineTo(oX, oY[o]); nx.stroke(); } }
     for (let i = 0; i < 4; i++) { nx.fillStyle = '#fff'; nx.shadowBlur = Math.abs(sV[i] || 0) * 10; nx.shadowColor = '#2196f3'; nx.beginPath(); nx.arc(sX, sY[i], 4, 0, Math.PI * 2); nx.fill(); }
     for (let h = 0; h < 4; h++) { nx.fillStyle = '#fff'; nx.shadowBlur = Math.abs(hV[h] || 0) * 10; nx.shadowColor = '#9c27b0'; nx.beginPath(); nx.arc(hX, hY[h], 4, 0, Math.PI * 2); nx.fill(); }
-    for (let o = 0; o < 4; o++) { nx.fillStyle = '#fff'; nx.shadowBlur = Math.abs(oV[o] || 0) * 10; nx.shadowColor = oV[o] > 0 ? '#ff1744' : '#b71c1c'; nx.beginPath(); nx.arc(oX, oY[o], 4, 0, Math.PI * 2); nx.fill(); }
+    for (let o = 0; o < 4; o++) { nx.fillStyle = '#fff'; nx.shadowBlur = Math.abs(oV[o] || 0) * 10; nx.shadowColor = oV[o]>0 ? '#ff1744' : '#b71c1c'; nx.beginPath(); nx.arc(oX, oY[o], 4, 0, Math.PI * 2); nx.fill(); }
     nx.shadowBlur = 0; nx.fillStyle = '#aaa'; nx.font = '8px sans-serif'; nx.fillText("SENSORS", 5, 12); nx.fillText("HIDDEN", 85, 12); nx.fillText("MUSCLES", 160, 12);
 }
 
-function start() { document.getElementById("g").innerText = window.gen; document.getElementById("c").innerText = window.cIdx + 1; window.cc = new Creature(window.pop[window.cIdx]); window.ticks = 0; }
+function start() { document.getElementById("g").innerText = window.gen; document.getElementById("g").innerText = window.gen; document.getElementById("c").innerText = window.cIdx + 1; window.cc = new Creature(window.pop[window.cIdx]); window.ticks = 0; }
 function nextGen() {
     window.pop.sort((a, b) => b.f - a.f); if (window.pop[0].f > window.best) window.best = window.pop[0].f; document.getElementById("b").innerText = Math.round(window.best);
-    let nP = []; let s1 = new window.DNA(); s1.r = window.clone(window.pop[0].r); s1.f = window.pop[0].f; let s2 = new window.DNA(); s2.r = window.clone(window.pop[0].r); s2.f = window.pop[0].f; nP.push(s1, s2);
-        // FIXED: Cleaned up the double-window typo so Generation 2 rolls over seamlessly!
+    let nP = []; let s1 = new window.DNA(); s1.r = window.clone(window.pop[0].r); s1.f = window.pop[0].f; let s2 = new window.DNA(); s2.r = window.clone(window.pop[1].r); s2.f = window.pop[1].f; nP.push(s1, s2);
     while (nP.length < window.PS) { let p = window.pop[Math.floor(Math.random() * 3)]; let c = new window.DNA(); c.r = window.clone(p.r); window.mutate(c.r); nP.push(c); }
-
     window.pop = nP; window.cIdx = 0; window.gen++; window.started = false; start();
 }
 function loop() { for (let s = 0; s < window.simSpeed; s++) { if (window.cc) { window.rtc += 0.15; window.cc.update(); window.ticks++; if (window.ticks >= window.MT) { window.pop[window.cIdx].f = Math.max(0, window.cc.getavg() - window.cc.sX); window.cIdx++; if (window.cIdx < window.PS) start(); else nextGen(); } } } cx.clearRect(0, 0, cv.width, cv.height); if (window.cc) window.cc.draw(); requestAnimationFrame(loop); }
