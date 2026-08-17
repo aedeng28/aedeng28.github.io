@@ -56,7 +56,11 @@ class Creature {
             node.ch.forEach(c => bld(c, eP, pPt, a));
         }
         dna.r.ch.forEach(c => bld(c, p1, p0, 0));
-        this.sV =; this.hV =; this.oV =;
+                // FIXED: Set these to empty arrays so the script compiles perfectly
+        this.sV = []; 
+        this.hV = []; 
+        this.oV = [];
+
     }
     update() {
         started = true;
