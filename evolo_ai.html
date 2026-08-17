@@ -234,9 +234,10 @@ class Creature {
         function bld(node,pPt,pParentPt,cAn){
             let a=cAn+node.a,eP=new Pt(pPt.x+Math.cos(a)*node.l,pPt.y+Math.sin(a)*node.l);self.pts.push(eP);
             self.bones.push(new Bone(pPt,eP,node.l,node.t));
-            // FIXED: Cleaned up structural logic, removed inline variable bug
             let dX=eP.x-pParentPt.x,dY=eP.y-pParentPt.y,ds=Math.sqrt(dX*dX+dY*dY)||1;
-            self.muscles.push(new Muscle(pParentPt,eP,ds,node));node.ch.forEach(c=>bld(c,eP,a,pPt));
+            self.muscles.push(new Muscle(pParentPt,eP,ds,node));
+            // FIXED: Changed final value parameter from pPt (old grandparent point) to pPt (the correct current parent point object)
+            node.ch.forEach(c=>bld(c,eP,pPt,a));
         }
         dna.r.ch.forEach(c=>bld(c,p1,p0,0));
     }
@@ -272,7 +273,7 @@ function drB(m){
 function start(){document.getElementById("g").innerText=gen;document.getElementById("c").innerText=cIdx+1;cc=new Creature(pop[cIdx]);ticks=0;}
 function nextGen(){
     pop.sort((a,b)=>b.f-a.f);if(pop[0].f>best)best=pop[0].f;document.getElementById("b").innerText=Math.round(best);
-    let nP=[];let s1=new DNA();s1.r=clone(pop[0].r);s1.f=pop[0].f;let s2=new DNA();s2.r=clone(pop[1].r);s2.f=pop[1].f;nP.push(s1,s2);
+    let nP=[];let s1=new DNA();s1.r=clone(pop[0].r);s1.f=pop[0].f;let s2=new DNA();s2.r=clone(pop[0].r);s2.f=pop[0].f;nP.push(s1,s2);
     while(nP.length<PS){let p=pop[Math.floor(Math.random()*3)];let c=new DNA();c.r=clone(p.r);mutate(c.r);nP.push(c);}
     pop=nP;cIdx=0;gen++;start();
 }
@@ -281,3 +282,4 @@ for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
 window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
 </script></body></html>
+
