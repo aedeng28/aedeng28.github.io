@@ -6,32 +6,32 @@ cv.width = window.innerWidth; cv.height = window.innerHeight;
 const GY = cv.height - 180;
 
 document.getElementById('ds').addEventListener('input', (e) => {
-    maxD = parseInt(e.target.value);
-    document.getElementById('dv').innerText = maxD;
+    window.maxD = parseInt(e.target.value);
+    document.getElementById('dv').innerText = window.maxD;
 });
 
 document.getElementById('sb').addEventListener('click', () => {
-    simSpeed = simSpeed === 1 ? 2 : simSpeed === 2 ? 5 : 1;
-    document.getElementById('sb').innerText = `⏩ Speed: ${simSpeed}x`;
+    window.simSpeed = window.simSpeed === 1 ? 2 : window.simSpeed === 2 ? 5 : 1;
+    document.getElementById('sb').innerText = `⏩ Speed: ${window.simSpeed}x`;
 });
 
 document.getElementById('tb').addEventListener('click', () => {
-    if (started) return alert("Reset page to change brain mode!");
-    brainMode = brainMode === "SIMPLE" ? "SMART" : "SIMPLE";
-    document.getElementById('tb').style.background = brainMode === "SIMPLE" ? "#ff9800" : "#009688";
-    document.getElementById('tb').innerText = `🧠 Brain: ${brainMode}`;
+    if (window.started) return alert("Reset page to change brain mode!");
+    window.brainMode = window.brainMode === "SIMPLE" ? "SMART" : "SIMPLE";
+    document.getElementById('tb').style.background = window.brainMode === "SIMPLE" ? "#ff9800" : "#009688";
+    document.getElementById('tb').innerText = `🧠 Brain: ${window.brainMode}`;
     initPop();
 });
 
 document.getElementById('cb').addEventListener('click', () => {
-    if (pop[cIdx]) navigator.clipboard.writeText(JSON.stringify(pop[cIdx].r));
+    if (window.pop[window.cIdx]) navigator.clipboard.writeText(JSON.stringify(window.pop[window.cIdx].r));
 });
 
 document.getElementById('lb').addEventListener('click', () => {
-    started = true;
+    window.started = true;
     try {
-        pop[cIdx].r = rehydrate(JSON.parse(document.getElementById('li').value.trim()));
-        pop[cIdx].f = 0; cc = new Creature(pop[cIdx]); ticks = 0;
+        window.pop[window.cIdx].r = window.rehydrate(JSON.parse(document.getElementById('li').value.trim()));
+        window.pop[window.cIdx].f = 0; window.cc = new Creature(window.pop[window.cIdx]); window.ticks = 0;
     } catch (e) { alert("Error!"); }
 });
 
@@ -54,36 +54,19 @@ class Creature {
             node.ch.forEach(c => bld(c, eP, pPt, a));
         }
         dna.r.ch.forEach(c => bld(c, p1, p0, 0));
-        
-        this.sV = []; 
-        this.hV = []; 
-        this.oV = [];
+        this.sV = []; this.hV = []; this.oV = [];
     }
     update() {
-        started = true;
+        window.started = true;
         this.pts.forEach(p => { let vx = (p.x - p.oX) * 0.85, vy = (p.y - p.oY) * 0.85; p.oX = p.x; p.oY = p.y; p.x += vx; p.y += vy + 0.45; });
-        
-        if (brainMode === "SIMPLE") {
-            this.muscles.forEach(m => { if (m.d) { m.tn = Math.sin(rtc * m.d.speed + m.d.phase); m.cL = m.bL * (1 + m.tn * 0.35); } });
+        if (window.brainMode === "SIMPLE") {
+            this.muscles.forEach(m => { if (m.d) { m.tn = Math.sin(window.rtc * m.d.speed + m.d.phase); m.cL = m.bL * (1 + m.tn * 0.35); } });
         } else {
             let mb = this.bones.find(() => true);
-            this.sV = [
-                Math.sin(ticks * 0.05),
-                mb ? Math.atan2(mb.p2.y - mb.p1.y, mb.p2.x - mb.p1.x) : 0,
-                this.pts.some(p => p.ig) ? 1 : 0,
-                Math.sin(rtc * 0.1)
-            ];
+            this.sV = [Math.sin(window.ticks * 0.05), mb ? Math.atan2(mb.p2.y - mb.p1.y, mb.p2.x - mb.p1.x) : 0, this.pts.some(p => p.ig) ? 1 : 0, Math.sin(window.rtc * 0.1)];
             let dB = this.dna.r;
-            for (let h = 0; h < 4; h++) { 
-                let sum = dB.bi[h]; 
-                for (let i = 0; i < 4; i++) sum += this.sV[i] * dB.wIH[h * 4 + i]; 
-                this.hV[h] = Math.tanh(sum); 
-            }
-            for (let o = 0; o < 4; o++) { 
-                let sum = dB.bi[4 + o]; 
-                for (let h = 0; h < 4; h++) sum += this.hV[h] * dB.wHO[o * 4 + h]; 
-                this.oV[o] = Math.tanh(sum); 
-            }
+            for (let h = 0; h < 4; h++) { let sum = dB.bi[h]; for (let i = 0; i < 4; i++) sum += this.sV[i] * dB.wIH[h * 4 + i]; this.hV[h] = Math.tanh(sum); }
+            for (let o = 0; o < 4; o++) { let sum = dB.bi[4 + o]; for (let h = 0; h < 4; h++) sum += this.hV[h] * dB.wHO[o * 4 + h]; this.oV[o] = Math.tanh(sum); }
             this.muscles.forEach((m, idx) => { if (m.d) { m.tn = this.oV[idx % 4]; m.cL = m.bL * (1 + m.tn * 0.35); } });
         }
         for (let p = 0; p < 8; p++) {
@@ -91,25 +74,24 @@ class Creature {
             this.muscles.forEach(m => { let dx = m.p2.x - m.p1.x, dy = m.p2.y - m.p1.y, ds = Math.sqrt(dx * dx + dy * dy) || 1, df = m.cL - ds, co = (df / ds) * 0.3, ox = dx * co, oy = dy * co; m.p1.x -= ox; m.p1.y -= oy; m.p2.x += ox; m.p2.y += oy; });
             this.pts.forEach(p => { if (p.y >= GY) { p.y = GY; p.x = p.oX; p.oY = GY; p.ig = true; } else { p.ig = false; } });
         }
-        camX += (this.getavg() - 300 - camX) * 0.08;
+        window.camX += (this.getavg() - 300 - window.camX) * 0.08;
     }
     draw() {
-        cx.save(); cx.translate(-camX, 0);
-        cx.strokeStyle = '#555'; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(camX, GY); cx.lineTo(camX + cv.width, GY); cx.stroke();
+        cx.save(); cx.translate(-window.camX, 0);
+        cx.strokeStyle = '#555'; cx.lineWidth = 4; cx.beginPath(); cx.moveTo(window.camX, GY); cx.lineTo(window.camX + cv.width, GY); cx.stroke();
         this.muscles.forEach(m => { cx.strokeStyle = m.tn > 0 ? '#ff1744' : '#9a0007'; cx.lineWidth = m.tn > 0 ? 4 : 2; cx.beginPath(); cx.moveTo(m.p1.x, m.p1.y); cx.lineTo(m.p2.x, m.p2.y); cx.stroke(); });
         this.bones.forEach(b => { cx.strokeStyle = '#4caf50'; cx.lineWidth = b.t; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(b.p1.x, b.p1.y); cx.lineTo(b.p2.x, b.p2.y); cx.stroke(); });
         this.pts.forEach(p => { cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(p.x, p.y, 5, 0, Math.PI * 2); cx.fill(); });
-        cx.restore();
-        drFB(this.sV, this.hV, this.oV, this.dna.r);
+        cx.restore(); drFB(this.sV, this.hV, this.oV, this.dna.r);
     }
     getavg() { let s = 0; this.pts.forEach(p => s += p.x); return s / this.pts.length; }
 }
 
 function drFB(sV, hV, oV, dB) {
     nx.clearRect(0, 0, nc.width, nc.height);
-    if (brainMode === "SIMPLE") {
+    if (window.brainMode === "SIMPLE") {
         nx.fillStyle = '#aaa'; nx.font = '10px sans-serif'; nx.fillText("Simple Oscillator Mode", 30, 55); nx.fillText("Limbs move on an isolated clock loop", 10, 75);
-        if (cc && cc.muscles.length > 0) { nx.strokeStyle = '#ff1744'; nx.lineWidth = 2; nx.beginPath(); nx.moveTo(20, 110); for (let x = 20; x < 180; x++) nx.lineTo(x, 110 + Math.sin((x + ticks) * 0.08) * 10); nx.stroke(); }
+        if (window.cc && window.cc.muscles.length > 0) { nx.strokeStyle = '#ff1744'; nx.lineWidth = 2; nx.beginPath(); nx.moveTo(20, 110); for (let x = 20; x < 180; x++) nx.lineTo(x, 110 + Math.sin((x + window.ticks) * 0.08) * 10); nx.stroke(); }
         return;
     }
     let sX = 20, hX = 105, oX = 190;
@@ -136,21 +118,22 @@ function drFB(sV, hV, oV, dB) {
     nx.shadowBlur = 0; nx.fillStyle = '#aaa'; nx.font = '8px sans-serif'; nx.fillText("SENSORS", 5, 12); nx.fillText("HIDDEN", 85, 12); nx.fillText("MUSCLES", 160, 12);
 }
 
-function start() { document.getElementById("g").innerText = gen; document.getElementById("c").innerText = cIdx + 1; cc = new Creature(pop[cIdx]); ticks = 0; }
+function start() { document.getElementById("g").innerText = window.gen; document.getElementById("c").innerText = window.cIdx + 1; window.cc = new Creature(window.pop[window.cIdx]); window.ticks = 0; }
 
 function nextGen() {
-    pop.sort((a, b) => b.f - a.f); if (pop[0].f > best) best = pop[0].f; document.getElementById("b").innerText = Math.round(best);
-    let nP = []; let s1 = new DNA(); s1.r = clone(pop[0].r); s1.f = pop[0].f; let s2 = new DNA(); s2.r = clone(pop[0].r); s2.f = pop[0].f; nP.push(s1, s2);
-    while (nP.length < PS) { let p = pop[Math.floor(Math.random() * 3)]; let c = new DNA(); c.r = clone(p.r); mutate(c.r); nP.push(c); }
-    pop = nP; cIdx = 0; gen++; start();
+    window.pop.sort((a, b) => b.f - a.f); if (window.pop[0].f > window.best) window.best = window.pop[0].f; document.getElementById("b").innerText = Math.round(window.best);
+    let nP = []; let s1 = new window.DNA(); s1.r = window.clone(window.pop[0].r); s1.f = window.pop[0].f; let s2 = new window.DNA(); s2.r = window.clone(window.pop[0].r); s2.f = window.pop[0].f; nP.push(s1, s2);
+    while (nP.length < window.PS) { let p = window.pop[Math.floor(Math.random() * 3)]; let c = new window.DNA(); c.r = window.clone(p.r); window.mutate(c.r); nP.push(c); }
+    window.pop = nP; window.cIdx = 0; window.gen++; start();
 }
 
 function loop() {
-    for (let s = 0; s < simSpeed; s++) { if (cc) { rtc += 0.15; cc.update(); ticks++; if (ticks >= MT) { pop[cIdx].f = Math.max(0, cc.getavg() - cc.sX); cIdx++; if (cIdx < PS) start(); else nextGen(); } } }
-    cx.clearRect(0, 0, cv.width, cv.height); if (cc) cc.draw(); requestAnimationFrame(loop);
+    for (let s = 0; s < window.simSpeed; s++) { if (window.cc) { window.rtc += 0.15; window.cc.update(); window.ticks++; if (window.ticks >= window.MT) { window.pop[window.cIdx].f = Math.max(0, window.cc.getavg() - window.cc.sX); window.cIdx++; if (window.cIdx < window.PS) start(); else nextGen(); } } }
+    cx.clearRect(0, 0, cv.width, cv.height); if (window.cc) window.cc.draw(); requestAnimationFrame(loop);
 }
 
-function initPop() { pop = []; for (let i = 0; i < PS; i++) pop.push(new DNA()); cIdx = 0; gen = 1; best = 0; document.getElementById("b").innerText = 0; start(); }
+function initPop() { window.pop = []; for (let i = 0; i < window.PS; i++) window.pop.push(new window.DNA()); window.cIdx = 0; window.gen = 1; window.best = 0; document.getElementById("b").innerText = 0; start(); }
 
 initPop(); loop();
 window.addEventListener('resize', () => { cv.width = window.innerWidth; cv.height = window.innerHeight; });
+
