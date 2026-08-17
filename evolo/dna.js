@@ -1,3 +1,10 @@
+// --- GLOBAL LAB CONFIGURATIONS (Loaded First) ---
+let maxD = 3;
+let brainMode = "SIMPLE";
+let PS = 10;
+let MT = 240;
+let pop = [], cIdx = 0, gen = 1, cc = null, best = 0, ticks = 0, rtc = 0, camX = 0, simSpeed = 1, started = false;
+
 // --- GENOTYPE BLUEPRINT ENGINE ---
 const randW = (n) => {
     let a = [];
@@ -17,7 +24,7 @@ class SegDNA {
         this.phase = Math.random() * Math.PI * 2; 
         this.speed = Math.random() * 0.12 + 0.06;
         
-        // Smart matrix multi-node synapse layers
+        // Smart matrix synapse layers
         this.wIH = randW(16); 
         this.wHO = randW(16); 
         this.bi = randW(8); 
@@ -73,3 +80,4 @@ function mutate(n, d = 0) {
     
     n.ch.forEach(c => mutate(c, d + 1));
 }
+
