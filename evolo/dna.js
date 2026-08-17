@@ -1,4 +1,4 @@
-// --- ATTACH SHARED VALUES TO THE GLOBAL VIEWPORT LAYER ---
+// --- ATTACH LAB SYSTEM VALUES SYSTEMICALLY TO THE WINDOW BLUEPRINT SCALES ---
 window.maxD = 3;
 window.brainMode = "SIMPLE";
 window.PS = 10;
@@ -18,10 +18,8 @@ class SegDNA {
         this.l = Math.random() * 20 + 35; 
         this.t = Math.random() * 4 + 5; 
         this.a = (Math.random() - 0.5) * 1.8;
-        
         this.phase = Math.random() * Math.PI * 2; 
         this.speed = Math.random() * 0.12 + 0.06;
-        
         this.wIH = randW(16); 
         this.wHO = randW(16); 
         this.bi = randW(8); 
@@ -46,8 +44,7 @@ function clone(n) {
 
 function rehydrate(r) {
     let s = new SegDNA();
-    s.l = r.l; s.t = r.t; s.a = r.a;
-    s.phase = r.phase; s.speed = r.speed;
+    s.l = r.l; s.t = r.t; s.a = r.a; s.phase = r.phase; s.speed = r.speed;
     s.wIH = [...r.wIH]; s.wHO = [...r.wHO]; s.bi = [...r.bi];
     s.ch = (r.ch || []).map(rehydrate);
     return s;
@@ -62,17 +59,12 @@ function mutate(n, d = 0) {
         if (Math.random() < 0.3) n.phase += (Math.random() - 0.5) * 0.5;
         if (Math.random() < 0.3) n.speed = Math.max(0.03, Math.min(0.25, n.speed + (Math.random() - 0.5) * 0.02));
     } else {
-        n.wIH = mutW(n.wIH, 0.35, 0.4);
-        n.wHO = mutW(n.wHO, 0.35, 0.4);
-        n.bi = mutW(n.bi, 0.35, 0.2);
+        n.wIH = mutW(n.wIH, 0.35, 0.4); n.wHO = mutW(n.wHO, 0.35, 0.4); n.bi = mutW(n.bi, 0.35, 0.2);
     }
     
     if (Math.random() < 0.15 && d < window.maxD && n.ch.length < 3) n.ch.push(new SegDNA(d + 1));
     if ((n.ch.length > 0 && d > 0 && Math.random() < 0.05) || (d >= window.maxD)) n.ch.splice(0, n.ch.length);
-    
     n.ch.forEach(c => mutate(c, d + 1));
 }
 
-// Make functions visible globally
 window.DNA = DNA; window.clone = clone; window.rehydrate = rehydrate; window.mutate = mutate;
-
