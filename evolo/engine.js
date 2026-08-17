@@ -7,6 +7,7 @@ const GY = cv.height - 180, PS = 10, MT = 240;
 
 let pop = [], cIdx = 0, gen = 1, cc = null, best = 0, ticks = 0, maxD = 3, rtc = 0, camX = 0, simSpeed = 1, brainMode = "SIMPLE", started = false;
 
+
 document.getElementById('ds').addEventListener('input', (e) => {
     maxD = parseInt(e.target.value);
     document.getElementById('dv').innerText = maxD;
