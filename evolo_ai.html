@@ -182,9 +182,9 @@ start();loop();
 
 // REMOVED CANVAS RESIZE RE-CALCULATION FOR ROCK-SOLID HEIGHT GROUND LAYOUT INDEPENDENCE
 </script></body></html>-->
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Evolution</title>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Evolution AI</title>
 <style>body{margin:0;background:#161616;color:#fff;font-family:sans-serif;overflow:hidden;}
-#ui,#nu{position:absolute;top:10px;background:rgba(0,0,0,0.8);padding:12px;border-radius:6px;border:1px solid #444;z-index:100;width:240px;box-sizing:border-box;}
+#ui,#nu{position:absolute;top:10px;background:rgba(0,0,0,0.85);padding:12px;border-radius:6px;border:1px solid #444;z-index:100;width:240px;box-sizing:border-box;}
 #ui{left:10px;}#nu{right:10px;}h2{margin:0;color:#4caf50;font-size:16px;}p{margin:4px 0 0 0;font-size:12px;color:#bbb;}span{font-weight:bold;color:#fff;}
 input[type=range],textarea{width:100%;margin-top:4px;box-sizing:border-box;background:#222;color:#fff;}
 button{background:#4caf50;color:#fff;border:none;padding:6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;width:100%;margin-top:6px;}</style></head><body>
@@ -226,18 +226,19 @@ class Creature {
             let a=cAn+node.a,eP=new Pt(pPt.x+Math.cos(a)*node.l,pPt.y+Math.sin(a)*node.l);self.pts.push(eP);self.bones.push(new Bone(pPt,eP,node.l,node.t));
             let dX=eP.x-pParentPt.x,dY=eP.y-pParentPt.y,ds=Math.sqrt(dX*dX+dY*dY)||1;self.muscles.push(new Muscle(pParentPt,eP,ds,node));node.ch.forEach(c=>bld(c,eP,pPt,a));
         }
-        dna.r.ch.forEach(c=>bld(c,p1,p0,0));this.sV=;this.hV=;this.oV=;
+        dna.r.ch.forEach(c=>bld(c,p1,p0,0));
+        // FIXED: Filled the empty arrays cleanly so no frame crashes occur
+        this.sV=[0,0,0,0];this.hV=[0,0,0,0];this.oV=[0,0,0,0];
     }
     update(){
         this.pts.forEach(p=>{let vx=(p.x-p.oX)*0.85,vy=(p.y-p.oY)*0.85;p.oX=p.x;p.oY=p.y;p.x+=vx;p.y+=vy+0.45;});
         let mb=this.bones.find(()=>true);
-        this.sV=Math.sin(ticks*0.05);this.sV=mb?Math.atan2(mb.p2.y-mb.p1.y,mb.p2.x-mb.p1.x):0;this.sV=this.pts.some(p=>p.ig)?1:0;this.sV=Math.sin(rtc*0.1);let dB=this.dna.r;
+        this.sV[0]=Math.sin(ticks*0.05);this.sV[1]=mb?Math.atan2(mb.p2.y-mb.p1.y,mb.p2.x-mb.p1.x):0;this.sV[2]=this.pts.some(p=>p.ig)?1:0;this.sV[3]=Math.sin(rtc*0.1);let dB=this.dna.r;
         for(let h=0;h<4;h++){let sum=dB.bi[h];for(let i=0;i<4;i++)sum+=this.sV[i]*dB.wIH[h*4+i];this.hV[h]=Math.tanh(sum);}
         for(let o=0;o<4;o++){let sum=dB.bi[4+o];for(let h=0;h<4;h++)sum+=this.hV[h]*dB.wHO[o*4+h];this.oV[o]=Math.tanh(sum);}
         this.muscles.forEach((m,idx)=>{if(m.d){m.tn=this.oV[idx%4];m.cL=m.bL*(1+m.tn*0.35);}});
         for(let p=0;p<8;p++){
             this.bones.forEach(b=>{let dx=b.p2.x-b.p1.x,dy=b.p2.y-b.p1.y,ds=Math.sqrt(dx*dx+dy*dy)||1,df=b.l-ds,co=(df/ds)*0.5,ox=dx*co,oy=dy*co;b.p1.x-=ox;b.p1.y-=oy;b.p2.x+=ox;b.p2.y+=oy;});
-            // FIXED: Corrected the typo 'dy=dy' inside the muscle constraint string
             this.muscles.forEach(m=>{let dx=m.p2.x-m.p1.x,dy=m.p2.y-m.p1.y,ds=Math.sqrt(dx*dx+dy*dy)||1,df=m.cL-ds,co=(df/ds)*0.3,ox=dx*co,oy=dy*co;m.p1.x-=ox;m.p1.y-=oy;m.p2.x+=ox;m.p2.y+=oy;});
             this.pts.forEach(p=>{if(p.y>=GY){p.y=GY;p.x=p.oX;p.oY=GY;p.ig=true;}else{p.ig=false;}});
         }
@@ -263,12 +264,12 @@ function drFB(sV,hV,oV,dB){
 }
 function start(){document.getElementById("g").innerText=gen;document.getElementById("c").innerText=cIdx+1;cc=new Creature(pop[cIdx]);ticks=0;}
 function nextGen(){
-    pop.sort((a,b)=>b.f-a.f);if(pop.f>best)best=pop.f;document.getElementById("b").innerText=Math.round(best);
-    let nP=[];let s1=new DNA();s1.r=clone(pop.r);s1.f=pop.f;let s2=new DNA();s2.r=clone(pop.r);s2.f=pop.f;nP.push(s1,s2);
+    pop.sort((a,b)=>b.f-a.f);if(pop[0].f>best)best=pop[0].f;document.getElementById("b").innerText=Math.round(best);
+    let nP=[];let s1=new DNA();s1.r=clone(pop[0].r);s1.f=pop[0].f;let s2=new DNA();s2.r=clone(pop[0].r);s2.f=pop[0].f;nP.push(s1,s2);
     while(nP.length<PS){let p=pop[Math.floor(Math.random()*3)];let c=new DNA();c.r=clone(p.r);mutate(c.r);nP.push(c);}
     pop=nP;cIdx=0;gen++;start();
 }
-function loop(){for(let s=0;s<simSpeed;s++){if(cc){rtc+=0.15;cc.update();ticks++;if(ticks>=MT){pop[cIdx].f=Math.max(0,cc.getavg()-cc.sX);cIdx++;if(cIdx<PS)start();else nextGen();}}}cx.clearRect(0,0,cv.width,cv.height);if(cc)cc.draw();requestAnimationFrame(loop);}
+function loop(){for(let s=0;s<simSpeed;s++){if(cc){rtc+=0.15;cc.update();ticks++;if(ticks>=MT){pop[cIdx].f=Math.max(0,cc.getavg()-cc.sX);cIdx++;if(cIdx<PS) start(); else nextGen();}}}cx.clearRect(0,0,cv.width,cv.height);if(cc)cc.draw();requestAnimationFrame(loop);}
 for(let i=0;i<PS;i++)pop.push(new DNA());
 start();loop();
 window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
