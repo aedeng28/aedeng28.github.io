@@ -7,6 +7,6 @@ function getinput(input){
     inv.value = text;
 };
 function ct(id, neww){
-    const inv = document.getElementById(input);
+    const inv = document.getElementById(id);
     inv.innerHTML = neww;
 };
