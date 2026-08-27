@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> ittle </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="imp.js" defer></script>
+<script defer>
+// Placeholder inputs (replace these with any values you like)
+let a = getinput("string"); 
+let b = Number(getinput("num"));            
+
+let L = [];
+let out = "";
+
+// Initialize the array of arrays
+for (let s = 0; s < b; s++) {
+    L.push([]);
+}
+
+// Populate the nested arrays
+for (let i = 0; i < a.length; i++) {
+    let e = L[Math.floor(i % b)];
+    e.push(a[i]);
+}
+
+// Print and accumulate the final string
+for (let j of L) {
+    console.log(out);
+    out = `${out}${j.join("")}`;
+}
+ct("out", out)
+//console.log("final");
+//console.log(out);
+
+</script>
+</head>
+<body>
+<div id="custom-header"></div>
+
+<div class="blue-container">
+  <p>Input String</p>
+<input id="string">
+<p>Height</p>
+<input id="num">
+  <p id="out"></p>
+</div>
+
+<script>
+  fetch('/header.html')
+    .then(res => res.text())
+    .then(data => document.getElementById('custom-header').innerHTML = data);
+</script>
+</body>
+</html>
