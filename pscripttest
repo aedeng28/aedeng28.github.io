@@ -1,0 +1,149 @@
+'''def ln(L):
+    return 0 if L=="" else ord(L.lower())-ord('a')+1
+def nl(L):
+    return chr(L+ord('a')-1)
+def iter(a,b):
+    return (a-b) %26
+ptxt=input("plain text:")
+key=input("key (no spaces):")
+ptxt=ptxt.lower()
+key=key.lower()
+ctxt="".join(nl(ln(ptxt[i])*ln(key[i % len(key)])%26) for i in range(len(ptxt)))
+fpos=[]
+pos=[]
+print(ctxt)
+for i in range(len(ctxt)):
+    pos=[]
+    p=ln(ctxt[i])
+    for j in range(26):
+        p=iter(p, ln(key[i % len(key)]))
+        if p==0:
+            print(f"possibility of a decoded character at {i} is {j+1}")
+            pos.append(j+1)
+    fpos.append(pos)
+    print(f"letter {i+1} can be decoded as {pos}, it is also finished")
+print(f"the final decoded text is {''.join(nl(fpos[i]) for i in range(len(fpos)))}")
+'''
+import itertools
+import heapq
+
+# English letter frequency scoring map (higher = more common in English)
+ENGLISH_FREQS = {
+    'a': 8.17, 'b': 1.49, 'c': 2.78, 'd': 4.25, 'e': 12.70, 'f': 2.23, 'g': 2.02,
+    'h': 6.09, 'i': 6.97, 'j': 0.15, 'k': 0.77, 'l': 4.03, 'm': 2.41, 'n': 6.75,
+    'o': 7.51, 'p': 1.93, 'q': 0.09, 'r': 5.99, 's': 6.33, 't': 9.06, 'u': 2.76,
+    'v': 0.98, 'w': 2.36, 'x': 0.15, 'y': 1.97, 'z': 0.07
+}
+
+def ln(L):
+    return 0 if L == "" else ord(L.lower()) - ord('a') + 1
+
+def nl(L):
+    return chr((L - 1) % 26 + ord('a'))
+
+def iter(a, b):
+    return (a - b) % 26
+
+def get_english_score(text):
+    """Calculates a total score based on English letter frequencies, ignoring spaces."""
+    return sum(ENGLISH_FREQS.get(char, 0) for char in text if char != ' ')
+
+ptxt = input("plain text: ")
+key = input("key (no spaces): ")
+ptxt = ptxt.lower()
+key = key.lower()
+
+# Encryption process (ignoring spaces for key stepping)
+ctxt_list = []
+key_idx = 0
+for char in ptxt:
+    if char == ' ':
+        ctxt_list.append(' ')
+    else:
+        # Step the key only when encrypting actual letters
+        ctxt_list.append(nl(ln(char) * ln(key[key_idx % len(key)]) % 26))
+        key_idx += 1
+
+ctxt = "".join(ctxt_list)
+print(f"\nEncrypted Ciphertext: {ctxt}\n")
+
+# Finding possibilities per character index
+fpos = []
+key_idx = 0
+for i, char in enumerate(ctxt):
+    if char == ' ':
+        fpos.append([' '])
+    else:
+        pos = []
+        p = ln(char)
+        for j in range(26):
+            p = iter(p, ln(key[key_idx % len(key)]))
+            if p == 0:
+                pos.append(nl(j + 1))
+        fpos.append(pos)
+        key_idx += 1
+
+print("--- Decoding Complete (Evaluating Top Combinations) ---")
+
+# Memory-safe collection using heapq to get the top 5 combinations
+# We generate all combinations using itertools.product but store only the top 5 highest scores
+top_n = heapq.nlargest(
+    5, 
+    ("".join(combo) for combo in itertools.product(*fpos)), 
+    key=get_english_score
+)
+
+# Display results
+for rank, text in enumerate(top_n, 1):
+    score = get_english_score(text)
+    print(f"Rank {rank} (Score: {score:.2f}): {text}")
+-----NEW---
+
+
+import secrets
+import base64
+
+def encrypt_xor(plain_text):
+    # Convert input string to raw binary bytes
+    ptxt_bytes = plain_text.encode('utf-8')
+    
+    # Generate a truly random key of matching length
+    key_bytes = secrets.token_bytes(len(ptxt_bytes))
+    
+    # Apply bitwise XOR
+    ctxt_bytes = bytes(p ^ k for p, k in zip(ptxt_bytes, key_bytes))
+    
+    return ctxt_bytes, key_bytes
+
+def decrypt_xor(ctxt_bytes, key_bytes):
+    # Apply bitwise XOR again to decrypt
+    ptxt_bytes = bytes(c ^ k for c, k in zip(ctxt_bytes, key_bytes))
+    return ptxt_bytes.decode('utf-8')
+
+# --- Execution ---
+message = input("Enter plain text: ")
+
+# Run Encryption
+ciphertext, random_key = encrypt_xor(message)
+
+# Convert raw bytes to standard copy-pasteable Text (Base64)
+key_text = base64.b64encode(random_key).decode('utf-8')
+ciphertext_text = base64.b64encode(ciphertext).decode('utf-8')
+
+print("\n--- ENCRYPTION OUTPUT ---")
+print("🔒 Hexadecimal Strings (For analyzing raw values):")
+print(f"   Key (Hex):        {random_key.hex()}")
+print(f"   Ciphertext (Hex): {ciphertext.hex()}")
+print("\n📋 Text Strings (Safe for copy-pasting into text messages/emails):")
+print(f"   Key (Text):       {key_text}")
+print(f"   Ciphertext (Text):{ciphertext_text}")
+
+
+print("\n--- DECRYPTION CHECK ---")
+# To decrypt text back, we reverse the Base64 encoding back into raw bytes first
+decoded_key_bytes = base64.b64decode(key_text.encode('utf-8'))
+decoded_ctxt_bytes = base64.b64decode(ciphertext_text.encode('utf-8'))
+
+# Run Decryption
+decrypted_message = decrypt_xor(decoded_ctxt_bytes, decoded_key_bytes)
+print(f"🔓 Decrypted Output: {decrypted_message}")
